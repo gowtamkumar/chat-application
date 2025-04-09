@@ -4,7 +4,6 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import getLogLevels from './Logger/logger';
 import { json } from 'express';
-// import { AllExceptionsFilter } from './common/exception/exception-filter';
 import { rateLimit } from 'express-rate-limit';
 
 async function bootstrap() {
@@ -44,4 +43,4 @@ async function bootstrap() {
     logger.log(`Application listening on port mode. http://localhost:${PORT}`);
   });
 }
-bootstrap();
+void bootstrap();
