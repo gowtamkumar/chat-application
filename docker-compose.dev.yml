@@ -1,16 +1,16 @@
 services:
   postgres:
-    container_name: chat-postgres
+    container_name: postgres
     image: postgres:latest
     restart: always
     environment:
-      POSTGRES_USER: chatAdmin
-      POSTGRES_PASSWORD: chatPassword
-      POSTGRES_DB: chat_db
-      TZ: 'GMT'
-      PGTZ: 'GMT'
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chat_pg_db
+      TZ: "GMT"
+      PGTZ: "GMT"
     ports:
-      - '5431:5432'
+      - "5434:5432"
     volumes:
       - postgresql_data:/var/lib/postgresql/data
     networks:
@@ -23,7 +23,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@chat.com
       - PGADMIN_DEFAULT_PASSWORD=password
     ports:
-      - '5050:80'
+      - "5050:80"
     depends_on:
       - postgres
     networks:
@@ -34,8 +34,8 @@ services:
     image: redis/redis-stack:latest
     restart: always
     ports:
-      - '6379:6379'
-      - '8001:8001'
+      - "6379:6379"
+      - "8001:8001"
     volumes:
       - redis_data:/var/lib/redis-stack
     environment:
@@ -47,19 +47,20 @@ services:
     container_name: server
     build:
       dockerfile: Dockerfile
-      context: .
+      context: ./server
     ports:
-      - '4400:4400'
+      - "4400:4400"
     volumes:
-      - /app/node_modules
-      - ./:/app
+      - /server/app/node_modules
+      - ./server:/app
     env_file:
-      - .env.development
+      - ./server/.env.development
     depends_on:
       - postgres
       - redis
     networks:
       - chat_network
+  
 
 networks:
   chat_network:
