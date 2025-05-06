@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_db
+    container_name: chat_postgres_db
     restart: always
     environment:
       POSTGRES_USER: admin
@@ -17,7 +17,7 @@ services:
       - main_network
 
   pgadmin:
-    container_name: pgadmin
+    container_name: chat_pgadmin
     image: dpage/pgadmin4:latest
     environment:
       - PGADMIN_DEFAULT_EMAIL=gowtampaul0@gmail.com
@@ -33,7 +33,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: server_app
+    container_name: chat_server_app
     env_file:
       - ./server/.env.development
     ports:
@@ -50,11 +50,11 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: client_app
+    container_name: chat_client_app
     ports:
       - "3100:3100"
     env_file:
-      - ./client/.env.development
+      - ./client/.env.local
     volumes:
       - ./client:/app
       - /app/node_modules
@@ -62,47 +62,6 @@ services:
       - server
     networks:
       - main_network
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - client
-  #     - server
-  #   networks:
-  #     - main_network
-
-  # backup:
-  #   image: postgres:16-alpine
-  #   container_name: db_backup
-  #   depends_on:
-  #     - postgres
-  #   entrypoint: ["sh", "-c", "/backup.sh"]
-  #   volumes:
-  #     - ./backups:/backups # Mount local folder to store backups
-  #     - ./scripts/backup.sh:/backup.sh
-  #   environment:
-  #     PGPASSWORD: password # match your DB password
-  #   networks:
-  #     - main_network
-
-  # restore:
-  #   image: postgres:16-alpine
-  #   container_name: postgres_restore
-  #   depends_on:
-  #     - postgres
-  #   volumes:
-  #     - ./backups:/backups  # Mount backup directory
-  #     - ./scripts/restore.sh:/restore.sh  # Mount restore script
-  #   entrypoint: ["sh", "/restore.sh"]  # Execute the restore script
-  #   environment:
-  #     PGPASSWORD: password  # PostgreSQL password
-  #   networks:
-  #     - main_network
-
 
 networks:
   main_network:
