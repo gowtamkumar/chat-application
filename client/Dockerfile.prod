@@ -1,0 +1,35 @@
+# production build stage
+FROM node:22.14.0-alpine as builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# serve static build
+FROM node:22.14.0-alpine
+RUN npm install -g http-server
+WORKDIR /app
+COPY --from=builder /app/build ./build
+
+EXPOSE 3300
+CMD ["http-server", "build", "-p", "3300"]
+
+
+# # Step 1: Build Stage
+# FROM node:22.14.0-alpine AS build
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY . ./
+# ENV REACT_APP_API_URL=http://localhost:4400
+# RUN npm run build
+
+# # Step2: Production
+# FROM nginx:1.12-alpine
+# RUN addgroup app && adduser -S -G app app
+# USER app
+# COPY --from=build-stage /app/build /usr/share/nginx/html
+# EXPOSE 3300
+# ENTRYPOINT [ "nginx", "-g", "daemon off;" ]

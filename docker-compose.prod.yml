@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: semicolonitinventery
+      POSTGRES_PASSWORD: semicolonit@
+      POSTGRES_DB: inventory_sas
+      TZ: "GMT"
+      PGTZ: "GMT"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - main_network
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=gowtam.semicolonit@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=semicolonit@
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - main_network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: server_app
+    restart: always
+    env_file:
+      - ./server/.env.production
+    environment:
+      NODE_ENV: production
+    ports:
+      - "4400:4400"
+    depends_on:
+      - postgres
+    networks:
+      - main_network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client_app
+    restart: always
+    env_file:
+      - ./client/.env.production
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - server
+    networks:
+      - main_network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - client
+      - server
+    networks:
+      - main_network
+networks:
+  main_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

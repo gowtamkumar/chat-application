@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: semicolonitinventery
+      POSTGRES_PASSWORD: semicolonit@
+      POSTGRES_DB: inventory_sas
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - main_network
+  restore:
+    image: postgres:16-alpine
+    container_name: postgres_restore
+    volumes:
+      - ./backups:/backups # Mount backup directory
+      - ./scripts/restore.sh:/restore.sh # Mount restore script
+    entrypoint: [ "sh", "/restore.sh" ] # Execute the restore script
+    environment:
+      PGPASSWORD: semicolonit@ # PostgreSQL password
+    depends_on:
+      - postgres
+    networks:
+      - main_network
+
+networks:
+  main_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

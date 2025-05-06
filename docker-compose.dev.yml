@@ -1,71 +1,112 @@
 services:
   postgres:
-    container_name: postgres
-    image: postgres:latest
+    image: postgres:16-alpine
+    container_name: postgres_db
     restart: always
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: chat_pg_db
+      POSTGRES_DB: real_time_comunication
       TZ: "GMT"
       PGTZ: "GMT"
     ports:
-      - "5434:5432"
+      - "5544:5432" # external:internal
     volumes:
-      - postgresql_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - chat_network
+      - main_network
 
   pgadmin:
-    container_name: chat-pgadmin
+    container_name: pgadmin
     image: dpage/pgadmin4:latest
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@chat.com
+      - PGADMIN_DEFAULT_EMAIL=gowtampaul0@gmail.com
       - PGADMIN_DEFAULT_PASSWORD=password
     ports:
       - "5050:80"
     depends_on:
       - postgres
     networks:
-      - chat_network
-
-  redis:
-    container_name: chat-redis-server
-    image: redis/redis-stack:latest
-    restart: always
-    ports:
-      - "6379:6379"
-      - "8001:8001"
-    volumes:
-      - redis_data:/var/lib/redis-stack
-    environment:
-      - REDIS_ARGS=--save 900 1
-    networks:
-      - chat_network
+      - main_network
 
   server:
-    container_name: server
     build:
-      dockerfile: Dockerfile
       context: ./server
-    ports:
-      - "4400:4400"
-    volumes:
-      - /server/app/node_modules
-      - ./server:/app
+      dockerfile: Dockerfile
+    container_name: server_app
     env_file:
       - ./server/.env.development
+    ports:
+      - "3900:3900"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
     depends_on:
       - postgres
-      - redis
     networks:
-      - chat_network
-  
+      - main_network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client_app
+    ports:
+      - "3100:3100"
+    env_file:
+      - ./client/.env.development
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - main_network
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: nginx
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - client
+  #     - server
+  #   networks:
+  #     - main_network
+
+  # backup:
+  #   image: postgres:16-alpine
+  #   container_name: db_backup
+  #   depends_on:
+  #     - postgres
+  #   entrypoint: ["sh", "-c", "/backup.sh"]
+  #   volumes:
+  #     - ./backups:/backups # Mount local folder to store backups
+  #     - ./scripts/backup.sh:/backup.sh
+  #   environment:
+  #     PGPASSWORD: password # match your DB password
+  #   networks:
+  #     - main_network
+
+  # restore:
+  #   image: postgres:16-alpine
+  #   container_name: postgres_restore
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./backups:/backups  # Mount backup directory
+  #     - ./scripts/restore.sh:/restore.sh  # Mount restore script
+  #   entrypoint: ["sh", "/restore.sh"]  # Execute the restore script
+  #   environment:
+  #     PGPASSWORD: password  # PostgreSQL password
+  #   networks:
+  #     - main_network
+
 
 networks:
-  chat_network:
+  main_network:
     driver: bridge
 
 volumes:
-  postgresql_data:
-  redis_data:
+  postgres_data:
