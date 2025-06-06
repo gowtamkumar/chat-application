@@ -52,7 +52,7 @@ services:
       dockerfile: Dockerfile
     container_name: chat_client_app
     ports:
-      - "3100:3100"
+      - "3200:3200"
     env_file:
       - ./client/.env.local
     volumes:
