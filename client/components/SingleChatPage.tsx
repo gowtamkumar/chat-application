@@ -1,253 +1,475 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import EmojiPicker from 'emoji-picker-react';
+import { useState, useRef, useEffect } from "react";
+import EmojiPicker from "emoji-picker-react";
+
+type User = {
+  id: number;
+  name: string;
+  avatar: string;
+};
+
+type Message = {
+  id: number;
+  userId: number;
+  text?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+};
 
 export default function SingleChatPage() {
-  const initialUsers = [
-    { id: 1, name: 'John Doe', avatar: '/user-avatar.png' },
-    { id: 2, name: 'Jane Smith', avatar: '/bot-avatar.png' },
+  const users: User[] = [
+    { id: 1, name: "John Doe", avatar: "/user-avatar.png" },
+    { id: 2, name: "Jane Smith", avatar: "/bot-avatar.png" },
   ];
 
-  const [users] = useState(initialUsers);
-  const [selectedUserId, setSelectedUserId] = useState<number>(initialUsers[0].id);
-  const [isDragging, setIsDragging] = useState(false);
-  const [inputText, setInputText] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  // Store messages with reactions
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: 'Hi there! How can I help you today?',
-      type: 'incoming' as const,
-      reactions: {} as Record<string, number>,
-    },
-    {
-      id: 2,
-      text: 'I have a question about my order.',
-      type: 'outgoing' as const,
-      reactions: {} as Record<string, number>,
-    },
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 1, userId: 2, text: "Hi! How are you?" },
+    { id: 2, userId: 1, text: "Hello! I’m good, thanks. How about you?" },
+    { id: 3, userId: 2, text: "Doing great, thanks!" },
   ]);
 
+  const [inputText, setInputText] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video" | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
+  // Audio recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
+
+  // Camera capture state
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const cameraStream = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const currentUserId = 1;
+  const chatPartner = users.find((u) => u.id !== currentUserId)!;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    if (videoRef.current && localStream) {
+      videoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+
+  // Start camera stream when camera modal opens
+  useEffect(() => {
+    if (cameraOpen) {
+      (async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          cameraStream.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (err) {
+          alert("Could not access camera.");
+          setCameraOpen(false);
+          console.error(err);
+        }
+      })();
+    } else {
+      // Stop camera when closing modal
+      if (cameraStream.current) {
+        cameraStream.current.getTracks().forEach((track) => track.stop());
+        cameraStream.current = null;
+      }
+    }
+  }, [cameraOpen]);
 
   const handleEmojiClick = (emojiData: { emoji: string }) => {
     setInputText((prev) => prev + emojiData.emoji);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        userId: currentUserId,
+        text: inputText,
+      },
+    ]);
+    setInputText("");
+    setShowEmojiPicker(false);
   };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      console.log('Dropped files:', files);
-      // TODO: handle upload
+  // Audio recording handlers
+  const startRecording = async () => {
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      alert("Audio recording is not supported in this browser.");
+      return;
     }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder.current = new MediaRecorder(stream);
+      audioChunks.current = [];
+
+      mediaRecorder.current.ondataavailable = (event) => {
+        audioChunks.current.push(event.data);
+      };
+
+      mediaRecorder.current.onstop = () => {
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            userId: currentUserId,
+            audioUrl,
+          },
+        ]);
+      };
+
+      mediaRecorder.current.start();
+      setIsRecording(true);
+    } catch (err) {
+      alert("Could not start recording.");
+      console.error(err);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorder.current?.stop();
+    mediaRecorder.current = null;
+    setIsRecording(false);
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  const startCall = async (type: "audio" | "video") => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        type === "video"
+          ? { video: true, audio: true }
+          : { video: false, audio: true }
+      );
+      setLocalStream(stream);
+      setCallType(type);
+    } catch (err) {
+      alert("Failed to access media devices.");
+      console.error(err);
+    }
+  };
+
+  const stopCall = () => {
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+    }
+    setLocalStream(null);
+    setCallType(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files?.length) {
-      console.log('Selected file:', files[0]);
-      // TODO: handle upload
+    if (files && files.length > 0) {
+      console.log("Selected file:", files[0]);
     }
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    const newMessage = {
-      id: messages.length + 1,
-      text: inputText,
-      type: 'outgoing' as const,
-      reactions: {},
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setInputText('');
-    setShowEmojiPicker(false);
+  const getUser = (id: number) => users.find((u) => u.id === id);
+
+  // Capture photo from webcam
+  const capturePhoto = () => {
+    if (!canvasRef.current || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageUrl = canvas.toDataURL("image/png");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          userId: currentUserId,
+          imageUrl,
+        },
+      ]);
+      setCameraOpen(false);
+    }
   };
-
-  // Toggle reaction emoji on a message
-  const toggleReaction = (messageId: number, emoji: string) => {
-    setMessages((prevMessages) =>
-      prevMessages.map((msg) => {
-        if (msg.id === messageId) {
-          const currentCount = msg.reactions[emoji] ?? 0;
-          const newReactions = { ...msg.reactions };
-
-          if (currentCount > 0) {
-            // Remove reaction
-            delete newReactions[emoji];
-          } else {
-            // Add reaction with count 1 (could be extended to multi-user counts)
-            newReactions[emoji] = 1;
-          }
-
-          return { ...msg, reactions: newReactions };
-        }
-        return msg;
-      })
-    );
-  };
-
-  const selectedUser = users.find((u) => u.id === selectedUserId);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      {/* Header */}
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
-        {selectedUser ? (
-          <>
-            <div className="flex items-center space-x-3">
-              <img src={selectedUser.avatar} className="w-10 h-10 rounded-full" />
-              <div>
-                <div className="font-semibold text-lg text-gray-400">{selectedUser.name}</div>
-                <div className="text-sm text-gray-400">Online</div>
-              </div>
+        <div className="flex items-center space-x-4">
+          <img
+            src={chatPartner.avatar}
+            alt={chatPartner.name}
+            className="w-12 h-12 rounded-full border-2 border-blue-500"
+          />
+          <div>
+            <div className="font-semibold text-lg text-gray-700">
+              {chatPartner.name}
             </div>
+            <div className="text-sm text-gray-400">Online</div>
+          </div>
+        </div>
 
-            <div className="flex items-center space-x-4 text-blue-500 text-xl">
-              <button title="Voice Call" className="hover:text-blue-600">
-                📞
-              </button>
-              <button title="Video Call" className="hover:text-blue-600">
-                🎥
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-gray-500">No user selected</div>
-        )}
+        <div className="flex items-center space-x-4 text-blue-500 text-xl">
+          <button
+            title="Start Voice Call"
+            className="hover:text-blue-600"
+            onClick={() => startCall("audio")}
+            type="button"
+            aria-label="Start voice call"
+          >
+            📞
+          </button>
+          <button
+            title="Start Video Call"
+            className="hover:text-blue-600"
+            onClick={() => startCall("video")}
+            type="button"
+            aria-label="Start video call"
+          >
+            🎥
+          </button>
+        </div>
       </header>
 
-      {/* Messages */}
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${
-              msg.type === 'incoming' ? 'items-start' : 'justify-end items-start'
-            } space-x-2 group`}
-          >
-            {msg.type === 'incoming' && (
-              <img src="/bot-avatar.png" className="w-8 h-8 rounded-full" />
-            )}
+        {messages.map((msg) => {
+          const user = getUser(msg.userId);
+          const isCurrentUser = msg.userId === currentUserId;
 
-            <div className="relative">
-              <div
-                className={`p-3 rounded-xl shadow text-sm max-w-xs ${
-                  msg.type === 'incoming' ? 'bg-white text-gray-400' : 'bg-blue-500 text-white'
-                }`}
-              >
-                {msg.text}
-              </div>
-
-              {/* Reactions */}
-              {Object.keys(msg.reactions).length > 0 && (
-                <div className="flex space-x-1 text-xs mt-1">
-                  {Object.entries(msg.reactions).map(([emoji, count]) => (
-                    <div
-                      key={emoji}
-                      className="bg-white border rounded-full px-2 py-0.5 shadow text-gray-700 select-none"
-                    >
-                      {emoji} {count}
-                    </div>
-                  ))}
-                </div>
+          return (
+            <div
+              key={msg.id}
+              className={`flex items-start space-x-2 ${
+                isCurrentUser ? "justify-end" : "justify-start"
+              }`}
+            >
+              {!isCurrentUser && (
+                <img
+                  src={user?.avatar}
+                  alt={user?.name}
+                  className="w-8 h-8 rounded-full"
+                />
               )}
 
-              {/* Reaction emojis */}
-              <div className="absolute top-0 -left-12 hidden group-hover:flex flex-col space-y-1">
-                {['👍', '❤️', '😂', '😮', '😢'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => toggleReaction(msg.id, emoji)}
-                    className="hover:scale-110 transition text-lg"
-                    title={`React with ${emoji}`}
-                    type="button"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+              <div
+                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${
+                  isCurrentUser
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-gray-700"
+                }`}
+              >
+                {!isCurrentUser && (
+                  <div className="text-xs font-semibold mb-1 text-gray-500">
+                    {user?.name}
+                  </div>
+                )}
+                {msg.text && <p>{msg.text}</p>}
+                {msg.audioUrl && (
+                  <audio controls className="w-full">
+                    <source src={msg.audioUrl} />
+                    Your browser does not support the audio element.
+                  </audio>
+                )}
+                {msg.imageUrl && (
+                  <img
+                    src={msg.imageUrl}
+                    alt="Sent photo"
+                    className="rounded-md max-w-xs"
+                  />
+                )}
               </div>
-            </div>
 
-            {msg.type === 'outgoing' && (
-              <img src="/user-avatar.png" className="w-8 h-8 rounded-full" />
-            )}
-          </div>
-        ))}
+              {isCurrentUser && (
+                <img
+                  src={user?.avatar}
+                  alt={user?.name}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
       </main>
 
-      {/* Message Input */}
       <footer className="p-4 bg-white border-t relative">
         {showEmojiPicker && (
           <div className="absolute bottom-20 left-4 z-10">
             <EmojiPicker onEmojiClick={handleEmojiClick} />
           </div>
         )}
-        <div
-          className={`flex items-center space-x-2 p-2 rounded-xl border-2 transition ${
-            isDragging ? 'border-blue-400 bg-blue-50' : 'border-transparent'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {/* Hidden File Input */}
-          <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-
-          {/* Upload Button */}
+        <div className="flex items-center space-x-2 p-2 rounded-xl border-2 border-transparent transition focus-within:border-blue-400 focus-within:bg-blue-50">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+          />
           <button
             onClick={() => fileInputRef.current?.click()}
             className="text-blue-500 hover:text-blue-600"
             type="button"
+            aria-label="Attach file"
           >
             📎
           </button>
 
-          {/* Emoji Button */}
           <button
             onClick={() => setShowEmojiPicker((prev) => !prev)}
             className="text-blue-500 hover:text-blue-600"
             type="button"
+            aria-label="Toggle emoji picker"
           >
             😊
           </button>
 
-          {/* Text Input */}
+          {/* Camera button */}
+          <button
+            onClick={() => setCameraOpen(true)}
+            className="text-blue-500 hover:text-blue-600"
+            type="button"
+            aria-label="Open camera"
+          >
+            📷
+          </button>
+
+          {/* Audio record button */}
+          <button
+            onClick={toggleRecording}
+            className={`${
+              isRecording ? "bg-red-600 text-white" : "text-blue-500"
+            } hover:text-blue-600 px-2 py-1 rounded`}
+            type="button"
+            aria-label="Record audio"
+          >
+            {isRecording ? "■ Recording" : "🎙️"}
+          </button>
+
           <input
             type="text"
             placeholder="Type a message or drop a file..."
             className="flex-1 p-2 border rounded-full text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSend();
+            }}
+            aria-label="Message input"
           />
 
-          {/* Send Button */}
           <button
             onClick={handleSend}
             className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
             type="button"
+            aria-label="Send message"
           >
             Send
           </button>
         </div>
       </footer>
+
+      {/* Camera Modal */}
+      {cameraOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="camera-modal-title"
+        >
+          <h2
+            id="camera-modal-title"
+            className="text-2xl font-semibold mb-4 text-white"
+          >
+            Capture Photo
+          </h2>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="rounded-md shadow-lg max-w-full max-h-96"
+          />
+          <div className="mt-4 space-x-4">
+            <button
+              onClick={capturePhoto}
+              className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600"
+              type="button"
+            >
+              Capture
+            </button>
+            <button
+              onClick={() => setCameraOpen(false)}
+              className="bg-gray-600 text-white px-6 py-2 rounded-full hover:bg-gray-700"
+              type="button"
+            >
+              Cancel
+            </button>
+          </div>
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+      )}
+
+      {/* Call Modal */}
+      {callType && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="call-modal-title"
+        >
+          <div className="bg-white rounded-lg p-6 max-w-md w-full flex flex-col items-center space-y-4 relative">
+            <h2
+              id="call-modal-title"
+              className="text-2xl font-semibold mb-2 text-center"
+            >
+              {callType === "audio" ? "Voice Call" : "Video Call"} with{" "}
+              {chatPartner.name}
+            </h2>
+
+            {callType === "video" ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-72 h-48 bg-gray-900 rounded-md"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-24 h-24 rounded-full bg-blue-500 text-white text-4xl">
+                🎙️
+              </div>
+            )}
+
+            <button
+              onClick={stopCall}
+              className="mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full"
+              type="button"
+            >
+              End Call
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
