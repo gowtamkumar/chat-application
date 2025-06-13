@@ -7,8 +7,10 @@ import {
   AfterRemove,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { GenderEnum, StatusEnum, RoleEnum, UserTypeEnum } from '../enums';
+import { MessagesEntity } from '@modules/message/entities/message.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -82,38 +84,8 @@ export class UserEntity {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: string;
 
-  // @OneToMany((_type) => ProductEntity, (product) => product.user)
-  // products: ProductEntity[];
-
-  // @OneToMany((_type) => OrderEntity, (product) => product.user)
-  // orders: OrderEntity[];
-
-  // @OneToMany((_type) => OrderEntity, (order) => order.deliveryMan)
-  // orderDeliveries: OrderEntity[];
-
-  // @OneToMany((_type) => ShippingAddressEntity, (shipping) => shipping.user)
-  // shippingAddress: ShippingAddressEntity[];
-
-  // @OneToMany((_type) => ReviewEntity, (review) => review.user)
-  // reviews: ReviewEntity[];
-
-  // @OneToMany((_type) => WishListEntity, (wishlist) => wishlist.user)
-  // wishlists: WishListEntity[];
-
-  // @OneToMany((_type) => PaymentEntity, (payment) => payment.user)
-  // payments: PaymentEntity[];
-
-  // @OneToMany((_type) => UserActivityEntity, (userActivity) => userActivity.user)
-  // userActivities: UserActivityEntity[];
-
-  // @OneToMany((_type) => PostEntity, (post) => post.user)
-  // posts: PostEntity[];
-
-  // @OneToMany((_type) => CommentEntity, (comment) => comment.user)
-  // comments: CommentEntity[];
-
-  // @OneToMany((_type) => NotificationEntity, (notification) => notification.user)
-  // notifications: NotificationEntity[];
+  @OneToMany(() => MessagesEntity, (message) => message.sender)
+  messages: MessagesEntity[];
 
   @AfterInsert()
   logInsert() {

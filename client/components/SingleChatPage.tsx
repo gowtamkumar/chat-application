@@ -3,16 +3,17 @@
 
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
+import socket from "@/utils/socket";
 
 type User = {
-  id: number;
+  id: number | string;
   name: string;
   avatar: string;
 };
 
 type Message = {
-  id: number;
-  userId: number;
+  id: number | string;
+  userId: number | string;
   text?: string;
   audioUrl?: string;
   imageUrl?: string;
@@ -20,14 +21,29 @@ type Message = {
 
 export default function SingleChatPage() {
   const users: User[] = [
-    { id: 1, name: "John Doe", avatar: "/user-avatar.png" },
-    { id: 2, name: "Jane Smith", avatar: "/bot-avatar.png" },
+    {
+      id: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
+      name: "John Doe",
+      avatar: "/user-avatar.png",
+    },
+    {
+      id: "d947a179-4061-4a37-a046-afecfda406f1",
+      name: "Jane Smith",
+      avatar: "/bot-avatar.png",
+    },
   ];
-
+    
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, userId: 2, text: "Hi! How are you?" },
-    { id: 2, userId: 1, text: "Hello! I’m good, thanks. How about you?" },
-    { id: 3, userId: 2, text: "Doing great, thanks!" },
+    {
+      id: 2,
+      userId: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
+      text: "Hello! I’m good, thanks. How about you?",
+    },
+    {
+      id: 3,
+      userId: "d947a179-4061-4a37-a046-afecfda406f1",
+      text: "Doing great, thanks!",
+    },
   ]);
 
   const [inputText, setInputText] = useState("");
@@ -49,7 +65,7 @@ export default function SingleChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const currentUserId = 1;
+  const currentUserId = "d947a179-4061-4a37-a046-afecfda406f1";
   const chatPartner = users.find((u) => u.id !== currentUserId)!;
 
   useEffect(() => {
@@ -67,7 +83,9 @@ export default function SingleChatPage() {
     if (cameraOpen) {
       (async () => {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
           cameraStream.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -87,22 +105,35 @@ export default function SingleChatPage() {
     }
   }, [cameraOpen]);
 
-  const handleEmojiClick = (emojiData: { emoji: string }) => {
-    setInputText((prev) => prev + emojiData.emoji);
+  useEffect(() => {
+    socket.on("chat message", (msg) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          userId: msg?.sender?.id,
+          text: msg.content,
+        },
+      ]);
+    });
+
+    return () => {
+      socket.off("chat message");
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (inputText.trim()) {
+      console.log("input", inputText);
+
+      socket.emit("chat message", inputText);
+      setInputText("");
+      setShowEmojiPicker(false);
+    }
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        userId: currentUserId,
-        text: inputText,
-      },
-    ]);
-    setInputText("");
-    setShowEmojiPicker(false);
+  const handleEmojiClick = (emojiData: { emoji: string }) => {
+    setInputText((prev) => prev + emojiData.emoji);
   };
 
   // Audio recording handlers
@@ -185,7 +216,7 @@ export default function SingleChatPage() {
     }
   };
 
-  const getUser = (id: number) => users.find((u) => u.id === id);
+  const getUser = (id: number | string) => users.find((u) => u.id === id);
 
   // Capture photo from webcam
   const capturePhoto = () => {
@@ -253,8 +284,12 @@ export default function SingleChatPage() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => {
-          const user = getUser(msg.userId);
+          const user = getUser(msg?.userId);
+          console.log("user", user);
+
           const isCurrentUser = msg.userId === currentUserId;
+          console.log("msg", msg);
+          console.log("isCurrentUser", isCurrentUser);
 
           return (
             <div
@@ -372,13 +407,13 @@ export default function SingleChatPage() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleSend();
+              if (e.key === "Enter") sendMessage();
             }}
             aria-label="Message input"
           />
 
           <button
-            onClick={handleSend}
+            onClick={sendMessage}
             className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
             type="button"
             aria-label="Send message"
