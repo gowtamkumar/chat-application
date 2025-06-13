@@ -22,6 +22,7 @@ import {
 import { RequestContext } from '@common/decorators/current-user.decorator';
 import { MessagesService } from '../services/message.service';
 
+// @UseGuards(JwtAuthGuard)
 @Controller('messagess')
 export class MessagesController {
   private logger = new Logger(MessagesController.name);
@@ -34,6 +35,8 @@ export class MessagesController {
     @Query() filterMessagesDto: FilterMessagesDto,
   ) {
     // this.logger.verbose(`User "${ctx.user?.username}" retieving Messagess.`);
+
+    console.log('ctx', ctx);
 
     const Messagess = await this.MessagesService.getMessagess(
       ctx,

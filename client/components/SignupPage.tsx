@@ -7,11 +7,11 @@ export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!username.trim() || !password) {
@@ -24,13 +24,30 @@ export default function SignupPage() {
       return;
     }
 
-    // Save user to localStorage (mock user storage)
-    localStorage.setItem(
-      "chat-user",
-      JSON.stringify({ username, avatarUrl, password })
-    );
+    const newData = {
+      name,
+      email,
+      username,
+      password,
+    };
 
-    router.push("/login");
+    const response = await fetch("http://localhost:3900/api/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newData),
+    });
+
+    const resData = await response.json();
+
+    if (!resData.success) {
+      alert(`${resData.message}`);
+    }
+    if (resData.success) {
+      alert(`${resData.message}`);
+      router.push("/login");
+    }
   };
 
   return (
@@ -76,18 +93,18 @@ export default function SignupPage() {
 
           <div>
             <label
-              htmlFor="avatar"
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Avatar URL (optional)
+              E-mail
             </label>
             <input
-              id="avatar"
+              id="email"
               type="text"
-              placeholder="https://example.com/avatar.png"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 

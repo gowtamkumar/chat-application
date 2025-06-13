@@ -2,10 +2,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function HomePage() {
+
   const route = useRouter();
   const currentUser = {
     name: "Alice Johnson",
@@ -93,9 +95,8 @@ export default function HomePage() {
               {currentUser.name}
             </span>
             <svg
-              className={`w-4 h-4 text-indigo-700 transition-transform ${
-                profileDropdownOpen ? "rotate-180" : "rotate-0"
-              }`}
+              className={`w-4 h-4 text-indigo-700 transition-transform ${profileDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -125,7 +126,7 @@ export default function HomePage() {
                 Settings
               </button>
               <button
-                onClick={() => alert("Logout")}
+                onClick={() =>  signOut()}
                 className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
               >
                 Logout
@@ -140,10 +141,9 @@ export default function HomePage() {
         <button
           onClick={() => setActiveTab("all")}
           className={`flex-1 py-3 text-center font-semibold transition
-            ${
-              activeTab === "all"
-                ? "border-b-4 border-indigo-600 text-indigo-700"
-                : "text-gray-500 hover:text-indigo-600"
+            ${activeTab === "all"
+              ? "border-b-4 border-indigo-600 text-indigo-700"
+              : "text-gray-500 hover:text-indigo-600"
             }`}
         >
           All
@@ -151,10 +151,9 @@ export default function HomePage() {
         <button
           onClick={() => setActiveTab("group")}
           className={`flex-1 py-3 text-center font-semibold transition
-            ${
-              activeTab === "group"
-                ? "border-b-4 border-indigo-600 text-indigo-700"
-                : "text-gray-500 hover:text-indigo-600"
+            ${activeTab === "group"
+              ? "border-b-4 border-indigo-600 text-indigo-700"
+              : "text-gray-500 hover:text-indigo-600"
             }`}
         >
           Groups
@@ -191,11 +190,10 @@ export default function HomePage() {
                 route.push(link);
               }}
               className={`flex items-center px-6 py-4 border-b cursor-pointer transition
-              ${
-                selectedChatId === chat.id
+              ${selectedChatId === chat.id
                   ? "bg-indigo-50 border-indigo-300"
                   : "hover:bg-indigo-100"
-              }`}
+                }`}
             >
               {/* Avatar with online badge */}
               <div className="relative">

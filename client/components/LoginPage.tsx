@@ -1,24 +1,36 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!username.trim()) {
-      alert('Please enter a username');
+      alert("Please enter a username");
       return;
     }
 
-    // Save login to localStorage (mock auth)
-    localStorage.setItem('chat-user', JSON.stringify({ username, avatarUrl }));
-    router.push('/chat'); // Replace with your actual chat route
+    const result = await signIn("credentials", {
+      username,
+      password,
+      redirect: false,
+    });
+
+    console.log("result", result);
+
+    if (!result.ok) {
+      alert(`${result.error}`);
+    }
+    if (result.ok) {
+      router.push("/chat");
+    }
   };
 
   //  const handleSubmit = async (values: any) => {
@@ -78,15 +90,19 @@ export default function LoginPage() {
   //   }
   // };
 
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-200 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to Chat App</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+          Welcome to Chat App
+        </h1>
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Username
             </label>
             <input
@@ -100,16 +116,19 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 mb-1">
-              Avatar URL (optional)
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Password
             </label>
             <input
-              id="avatar"
-              type="text"
-              placeholder="https://example.com/avatar.png"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
@@ -120,8 +139,8 @@ export default function LoginPage() {
             Login
           </button>
         </form>
-         <p className="mt-4 text-sm text-center text-gray-500">
-          Already have an account?{' '}
+        <p className="mt-4 text-sm text-center text-gray-500">
+          Already have an account?{" "}
           <a href="/signup" className="text-blue-600 hover:underline">
             New Account
           </a>

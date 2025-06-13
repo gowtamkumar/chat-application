@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import socket from "@/utils/socket";
+import { auth } from "@/auth";
 
 type User = {
   id: number | string;
@@ -95,7 +96,6 @@ export default function SingleChatPage() {
   }, [cameraOpen]);
 
   useEffect(() => {
-    console.log("testing...");
     getMessage()
     socket.on("chat message", (msg) => {
       console.log("msg", msg);
@@ -111,12 +111,15 @@ export default function SingleChatPage() {
     };
   }, []);
   const getMessage = async () => {
+    const session = await auth()
+    console.log("toekn", session);
+    
+    
     const getData = await fetch('http://localhost:3900/api/v1/messagess')
     const message = await getData.json()
     console.log("message", message);
-    
+  
     setMessages(message.data)
-
   }
 
   const sendMessage = () => {
