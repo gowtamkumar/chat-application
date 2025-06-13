@@ -14,7 +14,7 @@ type User = {
 type Message = {
   id: number | string;
   userId: number | string;
-  text?: string;
+  content?: string;
   audioUrl?: string;
   imageUrl?: string;
 };
@@ -32,19 +32,8 @@ export default function SingleChatPage() {
       avatar: "/bot-avatar.png",
     },
   ];
-    
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 2,
-      userId: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
-      text: "Hello! I’m good, thanks. How about you?",
-    },
-    {
-      id: 3,
-      userId: "d947a179-4061-4a37-a046-afecfda406f1",
-      text: "Doing great, thanks!",
-    },
-  ]);
+
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -106,14 +95,14 @@ export default function SingleChatPage() {
   }, [cameraOpen]);
 
   useEffect(() => {
+    console.log("testing...");
+    getMessage()
     socket.on("chat message", (msg) => {
+      console.log("msg", msg);
+      
       setMessages((prev) => [
         ...prev,
-        {
-          id: prev.length + 1,
-          userId: msg?.sender?.id,
-          text: msg.content,
-        },
+        msg,
       ]);
     });
 
@@ -121,6 +110,14 @@ export default function SingleChatPage() {
       socket.off("chat message");
     };
   }, []);
+  const getMessage = async () => {
+    const getData = await fetch('http://localhost:3900/api/v1/messagess')
+    const message = await getData.json()
+    console.log("message", message);
+    
+    setMessages(message.data)
+
+  }
 
   const sendMessage = () => {
     if (inputText.trim()) {
@@ -285,18 +282,14 @@ export default function SingleChatPage() {
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => {
           const user = getUser(msg?.userId);
-          console.log("user", user);
-
           const isCurrentUser = msg.userId === currentUserId;
-          console.log("msg", msg);
-          console.log("isCurrentUser", isCurrentUser);
+
 
           return (
             <div
               key={msg.id}
-              className={`flex items-start space-x-2 ${
-                isCurrentUser ? "justify-end" : "justify-start"
-              }`}
+              className={`flex items-start space-x-2 ${isCurrentUser ? "justify-end" : "justify-start"
+                }`}
             >
               {!isCurrentUser && (
                 <img
@@ -307,18 +300,19 @@ export default function SingleChatPage() {
               )}
 
               <div
-                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${
-                  isCurrentUser
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-gray-700"
-                }`}
+                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${isCurrentUser
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700"
+                  }`}
               >
                 {!isCurrentUser && (
                   <div className="text-xs font-semibold mb-1 text-gray-500">
                     {user?.name}
                   </div>
                 )}
-                {msg.text && <p>{msg.text}</p>}
+                {msg.content
+                  && <p>{msg.content
+                  }</p>}
                 {msg.audioUrl && (
                   <audio controls className="w-full">
                     <source src={msg.audioUrl} />
@@ -391,9 +385,8 @@ export default function SingleChatPage() {
           {/* Audio record button */}
           <button
             onClick={toggleRecording}
-            className={`${
-              isRecording ? "bg-red-600 text-white" : "text-blue-500"
-            } hover:text-blue-600 px-2 py-1 rounded`}
+            className={`${isRecording ? "bg-red-600 text-white" : "text-blue-500"
+              } hover:text-blue-600 px-2 py-1 rounded`}
             type="button"
             aria-label="Record audio"
           >
