@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
-
   const route = useRouter();
+  const session: any = useSession();
   const currentUser = {
     name: "Alice Johnson",
     avatar: "/user-avatar.png",
@@ -59,11 +61,27 @@ export default function HomePage() {
 
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState<"all" | "group">("all");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    const getData = await fetch("http://localhost:3900/api/v1/users", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.data?.user?.token}`,
+      },
+    });
+    const users = await getData.json();
+    setUsers(users.data);
+  };
+
   // Filter chats based on active tab and search query
-  const filteredChats = chats.filter((chat) => {
+  const filteredChats = users.filter((chat: any) => {
     const matchesTab = activeTab === "all" ? true : chat.type === "group";
     const matchesSearch = chat.name
       .toLowerCase()
@@ -126,7 +144,7 @@ export default function HomePage() {
                 Settings
               </button>
               <button
-                onClick={() =>  signOut()}
+                onClick={() => signOut()}
                 className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
               >
                 Logout
@@ -178,58 +196,61 @@ export default function HomePage() {
             No chats found.
           </div>
         ) : (
-          filteredChats.map((chat) => (
-            <div
-              key={chat.id}
-              // onClick={() => setSelectedChatId(chat.id)}
-              onClick={() => {
-                const link =
-                  chat.type === "group"
-                    ? "/group-chat/eee"
-                    : "/single-chat/eee";
-                route.push(link);
-              }}
-              className={`flex items-center px-6 py-4 border-b cursor-pointer transition
+          filteredChats.map((chat: any) => {
+            console.log("chat", chat);
+
+            return (
+              <div
+                key={chat.id}
+                onClick={() => {
+                  const link =
+                    chat.type === "group"
+                      ? `/group-chat/${chat.id}`
+                      : `/single-chat/${chat.id}`;
+                  route.push(link);
+                }}
+                className={`flex items-center px-6 py-4 border-b cursor-pointer transition
               ${selectedChatId === chat.id
-                  ? "bg-indigo-50 border-indigo-300"
-                  : "hover:bg-indigo-100"
-                }`}
-            >
-              {/* Avatar with online badge */}
-              <div className="relative">
-                <img
-                  src={chat.avatar}
-                  alt={chat.name}
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-                {chat.isOnline && (
-                  <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                    ? "bg-indigo-50 border-indigo-300"
+                    : "hover:bg-indigo-100"
+                  }`}
+              >
+                {/* Avatar with online badge */}
+                <div className="relative">
+                  <img
+                    src={chat.avatar}
+                    alt={chat.name}
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
+                  {chat.isOnline && (
+                    <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                  )}
+                </div>
+
+                {/* Chat info */}
+                <div className="flex-1 ml-5 overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <h2 className="font-semibold text-lg text-indigo-900 truncate">
+                      {chat.name}
+                    </h2>
+                    <span className="text-xs text-indigo-500 font-semibold whitespace-nowrap">
+                      {chat.lastTime}
+                    </span>
+                  </div>
+                  <p className="text-sm text-indigo-700 truncate mt-1">
+                    {chat.lastMessage}
+                  </p>
+                </div>
+
+                {/* Unread count badge */}
+                {chat.unreadCount > 0 && (
+                  <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
+                    {chat.unreadCount}
+                  </div>
                 )}
               </div>
-
-              {/* Chat info */}
-              <div className="flex-1 ml-5 overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <h2 className="font-semibold text-lg text-indigo-900 truncate">
-                    {chat.name}
-                  </h2>
-                  <span className="text-xs text-indigo-500 font-semibold whitespace-nowrap">
-                    {chat.lastTime}
-                  </span>
-                </div>
-                <p className="text-sm text-indigo-700 truncate mt-1">
-                  {chat.lastMessage}
-                </p>
-              </div>
-
-              {/* Unread count badge */}
-              {chat.unreadCount > 0 && (
-                <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
-                  {chat.unreadCount}
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </main>
     </div>

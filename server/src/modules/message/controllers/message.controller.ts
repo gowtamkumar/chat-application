@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { JwtAuthGuard } from '@admin/auth/guards/jwt-auth.guard';
 import { RequestContextDto } from '@common/dtos/request-context.dto';
 import {
@@ -22,7 +21,7 @@ import {
 import { RequestContext } from '@common/decorators/current-user.decorator';
 import { MessagesService } from '../services/message.service';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('messagess')
 export class MessagesController {
   private logger = new Logger(MessagesController.name);

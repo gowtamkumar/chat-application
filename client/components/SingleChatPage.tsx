@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import socket from "@/utils/socket";
-import { auth } from "@/auth";
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
 
 type User = {
   id: number | string;
@@ -21,6 +23,7 @@ type Message = {
 };
 
 export default function SingleChatPage() {
+  const usePrams = useParams()
   const users: User[] = [
     {
       id: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
@@ -33,6 +36,9 @@ export default function SingleChatPage() {
       avatar: "/bot-avatar.png",
     },
   ];
+
+  console.log("usePrams", usePrams);
+  
 
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -54,6 +60,7 @@ export default function SingleChatPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const session: any = useSession();
 
   const currentUserId = "d947a179-4061-4a37-a046-afecfda406f1";
   const chatPartner = users.find((u) => u.id !== currentUserId)!;
@@ -96,31 +103,33 @@ export default function SingleChatPage() {
   }, [cameraOpen]);
 
   useEffect(() => {
-    getMessage()
+    getMessage();
     socket.on("chat message", (msg) => {
       console.log("msg", msg);
-      
-      setMessages((prev) => [
-        ...prev,
-        msg,
-      ]);
+
+      setMessages((prev) => [...prev, msg]);
     });
 
     return () => {
       socket.off("chat message");
     };
   }, []);
+
   const getMessage = async () => {
-    const session = await auth()
-    console.log("toekn", session);
-    
-    
-    const getData = await fetch('http://localhost:3900/api/v1/messagess')
-    const message = await getData.json()
+    // const session = await auth()
+    // console.log("toekn", session.data.user.token);
+
+    const getData = await fetch("http://localhost:3900/api/v1/messagess", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.data?.user?.token}`,
+      },
+    });
+    const message = await getData.json();
     console.log("message", message);
-  
-    setMessages(message.data)
-  }
+
+    setMessages(message.data);
+  };
 
   const sendMessage = () => {
     if (inputText.trim()) {
@@ -287,12 +296,12 @@ export default function SingleChatPage() {
           const user = getUser(msg?.userId);
           const isCurrentUser = msg.userId === currentUserId;
 
-
           return (
             <div
               key={msg.id}
-              className={`flex items-start space-x-2 ${isCurrentUser ? "justify-end" : "justify-start"
-                }`}
+              className={`flex items-start space-x-2 ${
+                isCurrentUser ? "justify-end" : "justify-start"
+              }`}
             >
               {!isCurrentUser && (
                 <img
@@ -303,19 +312,18 @@ export default function SingleChatPage() {
               )}
 
               <div
-                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${isCurrentUser
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-700"
-                  }`}
+                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${
+                  isCurrentUser
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-gray-700"
+                }`}
               >
                 {!isCurrentUser && (
                   <div className="text-xs font-semibold mb-1 text-gray-500">
                     {user?.name}
                   </div>
                 )}
-                {msg.content
-                  && <p>{msg.content
-                  }</p>}
+                {msg.content && <p>{msg.content}</p>}
                 {msg.audioUrl && (
                   <audio controls className="w-full">
                     <source src={msg.audioUrl} />
@@ -388,8 +396,9 @@ export default function SingleChatPage() {
           {/* Audio record button */}
           <button
             onClick={toggleRecording}
-            className={`${isRecording ? "bg-red-600 text-white" : "text-blue-500"
-              } hover:text-blue-600 px-2 py-1 rounded`}
+            className={`${
+              isRecording ? "bg-red-600 text-white" : "text-blue-500"
+            } hover:text-blue-600 px-2 py-1 rounded`}
             type="button"
             aria-label="Record audio"
           >
