@@ -116,9 +116,6 @@ export default function SingleChatPage() {
   }, []);
 
   const getMessage = async () => {
-    // const session = await auth()
-    // console.log("toekn", session.data.user.token);
-
     const getData = await fetch("http://localhost:3900/api/v1/messagess", {
       headers: {
         "Content-Type": "application/json",

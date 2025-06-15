@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - main_network
+      - chat_main_network
   restore:
     image: postgres:16-alpine
     container_name: postgres_restore
@@ -23,10 +23,10 @@ services:
     depends_on:
       - postgres
     networks:
-      - main_network
+      - chat_main_network
 
 networks:
-  main_network:
+  chat_main_network:
     driver: bridge
 
 volumes:

@@ -81,7 +81,7 @@ export default function HomePage() {
   };
 
   // Filter chats based on active tab and search query
-  const filteredChats = users.filter((chat: any) => {
+  const filteredChats = (users || []).filter((chat: any) => {
     const matchesTab = activeTab === "all" ? true : chat.type === "group";
     const matchesSearch = chat.name
       .toLowerCase()

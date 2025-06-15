@@ -54,7 +54,7 @@ export class AuthController {
   ) {
     const authPayload = await this.authService.login(loginCredentialDto, req);
     // set cookies token
-    this.authService.sendCookiesResponse(authPayload.token, res);
+    this.authService.sendCookiesResponse(authPayload.accessToken, res);
     // this.sendCookiesResponse(res, authPayload.token);
 
     return {

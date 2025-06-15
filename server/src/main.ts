@@ -40,7 +40,9 @@ async function bootstrap() {
   );
   const PORT = process.env.API_PORT || 3900;
   await app.listen(PORT, () => {
-    logger.log(`Application listening on port mode. http://localhost:${PORT}`);
+    logger.log(
+      `Application listening on port mode. ${process.env.NODE_ENV} http://localhost:${PORT}`,
+    );
   });
 }
 void bootstrap();

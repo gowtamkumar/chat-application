@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -11,6 +12,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       name: "credentials",
 
       async authorize(credentials) {
+        console.log("testing....");
+
+        console.log("credentials",  `${process.env.NEXT_PUBLIC_API_URL}/auth/login`);
+        
+        
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
           {
@@ -20,6 +26,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           }
         );
         const user = await res.json();
+        console.log("user", user);
+        
         try {
           if (res.ok && user.data) {
             const newuser = { ...user.data, accessToken: user.accessToken };
@@ -101,7 +109,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET, // environment variable should be server and client same
   session: { strategy: "jwt", maxAge: 1 * 24 * 60 * 60 }, // 1 day
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }): Promise<any> {
       return {
         ...session,
         user: token.user,

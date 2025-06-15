@@ -68,7 +68,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid Login Credentials');
     }
 
-    const token = this.generateSignedJwt(user as UserDto);
+    const accessToken = this.generateSignedJwt(user as UserDto);
 
     // user.lastLogin = new Date().toDateString();
     // user.ipAddress = ip;
@@ -81,7 +81,7 @@ export class AuthService {
 
     return {
       user: { ...user, password: null },
-      token,
+      accessToken,
     };
   }
 
