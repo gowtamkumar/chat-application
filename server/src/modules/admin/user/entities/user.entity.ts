@@ -7,10 +7,8 @@ import {
   AfterRemove,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
 } from 'typeorm';
-import { GenderEnum, StatusEnum, RoleEnum, UserTypeEnum } from '../enums';
-import { MessagesEntity } from '@modules/message/entities/message.entity';
+import { GenderEnum, StatusEnum, UserTypeEnum } from '../enums';
 
 @Entity('users')
 export class UserEntity {
@@ -50,13 +48,13 @@ export class UserEntity {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.User })
-  roles: RoleEnum[];
+  // @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.User })
+  // roles: RoleEnum[];
 
   // @Column({ name: "is_admin", type: "boolean", default: false })
   // isAdmin: boolean;
 
-  @Column({ type: 'enum', enum: StatusEnum, default: StatusEnum.Active })
+  @Column({ type: 'enum', enum: StatusEnum, default: StatusEnum.Online })
   status: StatusEnum;
 
   @Column({ name: 'last_login', type: 'timestamp', nullable: true })
@@ -84,8 +82,8 @@ export class UserEntity {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: string;
 
-  @OneToMany(() => MessagesEntity, (message) => message.sender)
-  messages: MessagesEntity[];
+  // @OneToMany(() => MessagesEntity, (message) => message.sender)
+  // messages: MessagesEntity[];
 
   @AfterInsert()
   logInsert() {

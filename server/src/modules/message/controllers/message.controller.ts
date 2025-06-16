@@ -132,21 +132,4 @@ export class MessagesController {
       data: Messages,
     };
   }
-  // : Promise<BaseApiSuccessResponse<MessagesEntity[]>>
-
-  @UseGuards(JwtAuthGuard)
-  @Post('/initiate')
-  async initiateMessagesData(@RequestContext() ctx: RequestContextDto) {
-    this.logger.verbose(`User "${ctx.user?.username}" initiate Messages data.`);
-
-    const Messagess = await this.MessagesService.initiateMessagesData();
-
-    return {
-      success: true,
-      statusCode: 200,
-      message: `List of  Messagess`,
-      totalRecords: Messagess.length,
-      data: Messagess,
-    };
-  }
 }

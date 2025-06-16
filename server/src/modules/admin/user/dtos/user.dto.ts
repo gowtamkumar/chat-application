@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { StatusEnum, RoleEnum, GenderEnum, UserTypeEnum } from '../enums';
+import { StatusEnum, GenderEnum, UserTypeEnum } from '../enums';
 
 export class UserDto {
   @Expose()
@@ -53,8 +53,8 @@ export class UserDto {
   @Expose()
   resetToken: string;
 
-  @Expose()
-  roles: RoleEnum[];
+  // @Expose()
+  // roles: RoleEnum[];
 
   @Expose()
   status: StatusEnum;

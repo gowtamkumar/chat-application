@@ -8,7 +8,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
-import { GenderEnum, RoleEnum, StatusEnum } from '../enums';
+import { GenderEnum, StatusEnum } from '../enums';
 
 export class CreateUserDto {
   @IsString()
@@ -50,9 +50,9 @@ export class CreateUserDto {
   @IsOptional()
   resetToken: string;
 
-  @IsEnum(RoleEnum, { each: true })
-  @IsOptional()
-  roles: RoleEnum[];
+  // @IsEnum(RoleEnum, { each: true })
+  // @IsOptional()
+  // roles: RoleEnum[];
 
   @IsEnum(StatusEnum, { each: true })
   @IsOptional()

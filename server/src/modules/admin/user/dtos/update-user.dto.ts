@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { GenderEnum, RoleEnum, StatusEnum, UserTypeEnum } from '../enums';
+import { GenderEnum, StatusEnum, UserTypeEnum } from '../enums';
 
 export class UpdateUserDto {
   @IsString()
@@ -39,9 +39,9 @@ export class UpdateUserDto {
   @IsOptional()
   phone: string;
 
-  @IsEnum(RoleEnum, { each: true })
-  @IsOptional()
-  roles: RoleEnum[];
+  // @IsEnum(RoleEnum, { each: true })
+  // @IsOptional()
+  // roles: RoleEnum[];
 
   @IsString()
   @IsOptional()

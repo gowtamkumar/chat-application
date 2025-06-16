@@ -5,7 +5,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserDto } from '../../user/dtos/user.dto'; // Assuming this is the path
 import { AccessTokenPayload } from '../dtos'; // Assuming this is the path to your payload type
 import { ConfigService } from '@nestjs/config';
-import { StatusEnum } from '../../user/enums'; // Assuming you have a StatusEnum
 import { Request } from 'express';
 
 @Injectable()
@@ -47,13 +46,13 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy) {
     }
 
     // Check if the user's status is inactive or blocked
-    if (user.status === StatusEnum.Inactive) {
-      throw new UnauthorizedException('User account is inactive');
-    }
+    // if (user.status === StatusEnum.Inactive) {
+    //   throw new UnauthorizedException('User account is inactive');
+    // }
 
-    if (user.status === StatusEnum.Block) {
-      throw new UnauthorizedException('User account is blocked');
-    }
+    // if (user.status === StatusEnum.Block) {
+    //   throw new UnauthorizedException('User account is blocked');
+    // }
 
     return user; // Return the user object if everything is valid
   }

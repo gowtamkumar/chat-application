@@ -1,5 +1,4 @@
 import { IsEnum, IsOptional } from 'class-validator';
-import { RoleEnum } from '../enums/role.enum';
 import { StatusEnum } from '../enums';
 
 export class FilterUserDto {
@@ -12,9 +11,9 @@ export class FilterUserDto {
   @IsOptional()
   username: string;
 
-  @IsEnum(RoleEnum)
-  @IsOptional()
-  roles: RoleEnum;
+  // @IsEnum(RoleEnum)
+  // @IsOptional()
+  // roles: RoleEnum;
 
   @IsEnum(StatusEnum)
   @IsOptional()

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import Facebook from "next-auth/providers/facebook";
+// import Google from "next-auth/providers/google";
+// import Facebook from "next-auth/providers/facebook";
 import { authConfig } from "./config.auth";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -42,57 +42,57 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
     // Google OAuth
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    // Google({
+    //   clientId: process.env.GOOGLE_CLIENT_ID as string,
+    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
 
-      async profile(profile) {
-        // Check if profile.sub exists
-        if (!profile.sub) {
-          throw new Error(
-            "Profile id is missing in Google OAuth profile response"
-          );
-        }
-        const newUser = {
-          name: profile.name,
-          email: profile.email,
-          avatar: profile.picture,
-          provider_id: profile.sub,
-        };
+    //   async profile(profile) {
+    //     // Check if profile.sub exists
+    //     if (!profile.sub) {
+    //       throw new Error(
+    //         "Profile id is missing in Google OAuth profile response"
+    //       );
+    //     }
+    //     const newUser = {
+    //       name: profile.name,
+    //       email: profile.email,
+    //       avatar: profile.picture,
+    //       provider_id: profile.sub,
+    //     };
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/get-user-by-email`,
-          {
-            method: "POST",
-            body: JSON.stringify(newUser),
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        const user = await res.json();
-        return user.data;
-      },
-    }),
-    Facebook({
-      clientId: process.env.FACEBOOK_CLIENT_ID,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+    //     const res = await fetch(
+    //       `${process.env.NEXT_PUBLIC_API_URL}/auth/get-user-by-email`,
+    //       {
+    //         method: "POST",
+    //         body: JSON.stringify(newUser),
+    //         headers: { "Content-Type": "application/json" },
+    //       }
+    //     );
+    //     const user = await res.json();
+    //     return user.data;
+    //   },
+    // }),
+    // Facebook({
+    //   clientId: process.env.FACEBOOK_CLIENT_ID,
+    //   clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
 
-      async profile(profile) {
-        const newUser = {
-          name: profile.name,
-          email: profile.email,
-        };
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/get-user-by-email`,
-          {
-            method: "POST",
-            body: JSON.stringify(newUser),
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        const user = await res.json();
-        return user.data;
-      },
-    }),
+    //   async profile(profile) {
+    //     const newUser = {
+    //       name: profile.name,
+    //       email: profile.email,
+    //     };
+    //     const res = await fetch(
+    //       `${process.env.NEXT_PUBLIC_API_URL}/auth/get-user-by-email`,
+    //       {
+    //         method: "POST",
+    //         body: JSON.stringify(newUser),
+    //         headers: { "Content-Type": "application/json" },
+    //       }
+    //     );
+    //     const user = await res.json();
+    //     return user.data;
+    //   },
+    // }),
   ],
   pages: {
     signIn: "/login",

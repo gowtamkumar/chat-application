@@ -71,7 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     };
     const message = this.messageRepo.create({
       content,
-      sender,
+      senderId: sender.id,
     });
     console.log('message0', message);
 

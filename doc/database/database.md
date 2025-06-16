@@ -1,315 +1,396 @@
-## Users and Contacts
-
--- users: Stores information about each user of the chat application.
+🧑‍💼 users: 
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique identifier for the user
-    username VARCHAR(255) UNIQUE NOT NULL, -- Unique username for login/display
-    email VARCHAR(255) UNIQUE NOT NULL, -- Unique email address for registration/recovery
-    password TEXT NOT NULL, -- Hashed password (ensure proper hashing algorithm is used)
-    profile_picture TEXT, -- URL to the user's profile picture
-    status ENUM('online', 'offline', 'busy', 'away') DEFAULT 'offline', -- User's current online status
-    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the user account was created
-    updated_at TIMESTAMPTZ DEFAULT NOW() -- Timestamp of the last update to the user's profile
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password TEXT NOT NULL, -- Hashed password
+    profile_picture TEXT,
+    status TEXT CHECK (status IN ('online', 'offline', 'busy', 'away')) DEFAULT 'offline',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- contacts: Manages contact relationships between users.
+🤝 contacts
 CREATE TABLE contacts (
-    user_id_1 UUID REFERENCES users(id) NOT NULL, -- The ID of the user who initiated/is part of the contact relationship
-    user_id_2 UUID REFERENCES users(id) NOT NULL, -- The ID of the other user in the contact relationship
-    status ENUM('pending', 'accepted', 'blocked') NOT NULL, -- The current status of the contact relationship
-    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the contact request was made
+    user_id_1 UUID NOT NULL,
+    user_id_2 UUID NOT NULL,
+    status TEXT CHECK (status IN ('pending', 'accepted', 'blocked')) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id_1, user_id_2),
-    -- Ensures consistent storage: always store the contact with the lexicographically smaller UUID first.
-    -- This prevents duplicate entries like (userA, userB) and (userB, userA).
-    CONSTRAINT chk_users_order CHECK (user_id_1 < user_id_2)
+    CONSTRAINT fk_user1 FOREIGN KEY (user_id_1) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user2 FOREIGN KEY (user_id_2) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT chk_order CHECK (user_id_1 < user_id_2)
 );
 
-## Chat and Messaging System
--- conversations: A central hub for all types of conversations (one-to-one or group).
+💬 conversations
 CREATE TABLE conversations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique identifier for the conversation
-    type ENUM('one_to_one', 'group') NOT NULL, -- Specifies the type of conversation
-    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the conversation was initiated
-    updated_at TIMESTAMPTZ DEFAULT NOW() -- Timestamp of the last activity in the conversation
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT CHECK (type IN ('one_to_one', 'group')) NOT NULL,
+    conversation_name VARCHAR(255), -- Optional for group chats
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- conversation_participants: Links users to conversations.
+👥 conversation_participants
+
 CREATE TABLE conversation_participants (
-    conversation_id UUID REFERENCES conversations(id) NOT NULL, -- The ID of the conversation
-    user_id UUID REFERENCES users(id) NOT NULL, -- The ID of the participating user
-    joined_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the user joined the conversation
-    PRIMARY KEY (conversation_id, user_id) -- Ensures a user can only participate once in a given conversation
+    conversation_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    joined_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (conversation_id, user_id),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- messages: Stores individual messages sent by users within conversations.
+📨 messages
+
 CREATE TABLE messages (
-    id BIGSERIAL PRIMARY KEY, -- Unique, auto-incrementing identifier for the message
-    conversation_id UUID REFERENCES conversations(id) NOT NULL, -- The conversation this message belongs to
-    sender_id UUID REFERENCES users(id) NOT NULL, -- The user who sent the message
-    content TEXT NOT NULL, -- The actual text content of the message
-    created_at TIMESTAMPTZ DEFAULT NOW() -- Timestamp of when the message was sent
+    id BIGSERIAL PRIMARY KEY,
+    conversation_id UUID NOT NULL,
+    sender_id UUID NOT NULL,
+    content TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- message_receipts: Tracks the status (sent, delivered, read) of messages for each recipient.
+📥 message_receipts
 CREATE TABLE message_receipts (
-    message_id BIGINT REFERENCES messages(id) NOT NULL, -- The ID of the message
-    user_id UUID REFERENCES users(id) NOT NULL, -- The ID of the recipient user
-    status ENUM('sent', 'delivered', 'read') NOT NULL, -- The receipt status of the message for that recipient
-    updated_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of the last status update
-    PRIMARY KEY (message_id, user_id) -- Ensures a unique receipt status for each message/user pair
+    message_id BIGINT NOT NULL,
+    user_id UUID NOT NULL,
+    status TEXT CHECK (status IN ('sent', 'delivered', 'read')) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (message_id, user_id),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- message_attachments: If your chat supports media or file attachments.
+📎 message_attachments
 CREATE TABLE message_attachments (
-    id BIGSERIAL PRIMARY KEY, -- Unique, auto-incrementing identifier for the attachment
-    message_id BIGINT REFERENCES messages(id) NOT NULL, -- The message this attachment belongs to
-    file_url TEXT NOT NULL, -- URL to the stored file
-    file_type VARCHAR(50) NOT NULL, -- e.g., 'image/jpeg', 'video/mp4', 'application/pdf'
-    created_at TIMESTAMPTZ DEFAULT NOW() -- Timestamp of when the attachment was added
+    id BIGSERIAL PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    file_url TEXT NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
 );
 
--- message_reactions: If users can react to messages (e.g., like, emoji reactions).
+😄 message_reactions
 CREATE TABLE message_reactions (
-    id BIGSERIAL PRIMARY KEY, -- Unique, auto-incrementing identifier for the reaction
-    message_id BIGINT REFERENCES messages(id) NOT NULL, -- The message that was reacted to
-    user_id UUID REFERENCES users(id) NOT NULL, -- The user who added the reaction
-    reaction_type VARCHAR(50) NOT NULL, -- The type of reaction (e.g., '👍', '❤️', '😂', or 'like', 'heart')
-    created_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the reaction was added
-    UNIQUE (message_id, user_id, reaction_type) -- Ensures a user can only add one of each reaction type to a message
+    id BIGSERIAL PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    user_id UUID NOT NULL,
+    reaction_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (message_id, user_id, reaction_type),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-## Group-Specific Functionality
--- groups: Contains details specific to group conversations.
+👨‍👩‍👧 groups
 CREATE TABLE groups (
-    conversation_id UUID PRIMARY KEY REFERENCES conversations(id) NOT NULL, -- Links to a conversation entry of type 'group'
-    name VARCHAR(255) NOT NULL, -- The name of the group
-    description TEXT, -- A brief description of the group
-    group_icon_url TEXT, -- URL to the group's icon
-    creator_id UUID REFERENCES users(id) NOT NULL -- The user who created the group
+    conversation_id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    group_icon_url TEXT,
+    creator_id UUID NOT NULL,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- group_members: Defines which users are members of which groups and their roles.
+👤 group_members
 CREATE TABLE group_members (
-    conversation_id UUID REFERENCES groups(conversation_id) NOT NULL, -- The ID of the group conversation
-    user_id UUID REFERENCES users(id) NOT NULL, -- The ID of the group member
-    role ENUM('admin', 'member') DEFAULT 'member' NOT NULL, -- The role of the user within the group
-    added_by UUID REFERENCES users(id), -- The user who added this member to the group (can be NULL if it's the creator)
-    PRIMARY KEY (conversation_id, user_id) -- Ensures a user can only be a member once in a specific group
+    conversation_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    role TEXT CHECK (role IN ('admin', 'member')) DEFAULT 'member',
+    added_by UUID,
+    PRIMARY KEY (conversation_id, user_id),
+    FOREIGN KEY (conversation_id) REFERENCES groups(conversation_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
-## Voice and Video Call System 📞📹
--- calls: Stores information about voice and video calls.
+📞 calls
+
 CREATE TABLE calls (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique identifier for the call
-    conversation_id UUID REFERENCES conversations(id) NOT NULL, -- The conversation in which the call was initiated
-    type ENUM('voice', 'video') NOT NULL, -- The type of call
-    status ENUM('initiated', 'ongoing', 'completed', 'missed') NOT NULL, -- The current status of the call
-    started_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp of when the call began
-    ended_at TIMESTAMPTZ -- Timestamp of when the call ended (NULL if ongoing)
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL,
+    type TEXT CHECK (type IN ('voice', 'video')) NOT NULL,
+    status TEXT CHECK (status IN ('initiated', 'ongoing', 'completed', 'missed')) NOT NULL,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 );
 
--- call_participants: Tracks participants within each call.
+🙋‍♂️ call_participants
 CREATE TABLE call_participants (
-    call_id UUID REFERENCES calls(id) NOT NULL, -- The ID of the call
-    user_id UUID REFERENCES users(id) NOT NULL, -- The ID of the participant
-    status ENUM('ringing', 'connected', 'declined', 'left') NOT NULL, -- The participant's status in the call
-    joined_at TIMESTAMPTZ, -- Timestamp of when the participant joined the call
-    left_at TIMESTAMPTZ, -- Timestamp of when the participant left the call (NULL if still connected)
-    PRIMARY KEY (call_id, user_id) -- Ensures a user can only be a participant once in a specific call
+    call_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    status TEXT CHECK (status IN ('ringing', 'connected', 'declined', 'left')) NOT NULL,
+    joined_at TIMESTAMPTZ,
+    left_at TIMESTAMPTZ,
+    PRIMARY KEY (call_id, user_id),
+    FOREIGN KEY (call_id) REFERENCES calls(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- screen_share_logs: Records details about screen sharing sessions within calls.
+🖥️ screen_share_logs
 CREATE TABLE screen_share_logs (
-    id BIGSERIAL PRIMARY KEY, -- Unique identifier for the screen share log entry
-    call_id UUID REFERENCES calls(id) NOT NULL, -- The call during which screen sharing occurred
-    sharer_user_id UUID REFERENCES users(id) NOT NULL, -- The user who was sharing their screen
-    started_at TIMESTAMPTZ DEFAULT NOW(), -- Timestamp when screen sharing began
-    ended_at TIMESTAMPTZ -- Timestamp when screen sharing ended (NULL if still ongoing or disconnected unexpectedly)
+    id BIGSERIAL PRIMARY KEY,
+    call_id UUID NOT NULL,
+    sharer_user_id UUID NOT NULL,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    FOREIGN KEY (call_id) REFERENCES calls(id) ON DELETE CASCADE,
+    FOREIGN KEY (sharer_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 
 
 
-## users (This will store information about each user of the chat application.)
 
-id,
-username,
-email,
-password,
-profile_picture,
-status ENUM('online', 'offline', 'busy', 'away') DEFAULT 'offline',
-created_at,
-updated_at,
 
-## contacts
+// TypeORM Entities for WhatsApp-style Chat Application
 
-user_id_1 UUID (Foreign Key to users.id) The ID of the user who initiated the contact request.
-user_id_2 UUID (Foreign Key to users.id) The ID of the user who received the contact request.
-status ENUM('pending', 'accepted', 'blocked') The current status of the contact relationship.
-created_at TIMESTAMPZ Timestamp of when the contact request was made.
-Primary Key (user_id_1, user_id_2)
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  PrimaryColumn,
+  OneToOne,
+  ManyToMany,
+  JoinTable
+} from 'typeorm';
 
-## conversations
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-id UUID (Primary Key) Unique identifier for the conversation.
-type ENUM('one_to_one', 'group') Specifies the type of conversation.
-created_at TIMESTAMPZ Timestamp of when the conversation was initiated.
-updated_at TIMESTAMPZ Timestamp of the last activity in the conversation.
+  @Column({ unique: true })
+  username: string;
 
-## conversation_participants
+  @Column({ unique: true })
+  email: string;
 
-conversation_id UUID (Foreign Key to conversations.id) The ID of the conversation.
-user_id UUID (Foreign Key to users.id) The ID of the participating user.
-joined_at TIMESTAMPZ Timestamp of when the user joined the conversation.
-Primary Key (conversation_id, user_id)
+  @Column()
+  password: string;
 
-## messages(Stores individual messages sent by users.)
+  @Column({ nullable: true })
+  profile_picture: string;
 
-id BIGSERIAL (Primary Key) Unique, auto-incrementing identifier for the message.
-conversation_id UUID (Foreign Key to conversations.id) The conversation this message belongs to.
-sender_id UUID (Foreign Key to users.id) The user who sent the message.
-content TEXT The actual text content of the message.
-status (sent, delivered, read)
-created_at TIMESTAMPZ Timestamp of when the message was sent.
+  @Column({ type: 'enum', enum: ['online', 'offline', 'busy', 'away'], default: 'offline' })
+  status: 'online' | 'offline' | 'busy' | 'away';
 
-## message_receipts
+  @CreateDateColumn()
+  created_at: Date;
 
-message_id BIGINT (Foreign Key to messages.id) The ID of the message.
-user_id UUID (Foreign Key to users.id) The ID of the recipient.
-status ENUM('sent', 'delivered', 'read') The receipt status of the message.
-updated_at TIMESTAMPZ Timestamp of the last status update.
-Primary Key (message_id, user_id)
+  @UpdateDateColumn()
+  updated_at: Date;
+}
 
-# contacts
+@Entity('contacts')
+export class Contact {
+  @PrimaryColumn('uuid')
+  user_id_1: string;
 
-user_id_1 UUID (Foreign Key to users.id) The ID of the user who initiated the contact request.
-user_id_2 UUID (Foreign Key to users.id) The ID of the user who received the contact request.
-status ENUM('pending', 'accepted', 'blocked') The current status of the contact relationship.
-created_at TIMESTAMPZ Timestamp of when the contact request was made.
-Primary Key (user_id_1, user_id_2)
+  @PrimaryColumn('uuid')
+  user_id_2: string;
 
-Export to Sheets
+  @Column({ type: 'enum', enum: ['pending', 'accepted', 'blocked'] })
+  status: 'pending' | 'accepted' | 'blocked';
 
-## Chat and Messaging System
+  @CreateDateColumn()
+  created_at: Date;
+}
 
-This section covers both one-on-one and group conversations.
+@Entity('conversations')
+export class Conversation {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-conversations
-This table is a central hub for all types of conversations.
+  @Column({ type: 'enum', enum: ['one_to_one', 'group'] })
+  type: 'one_to_one' | 'group';
 
-Column Data Type Description
-id UUID (Primary Key) Unique identifier for the conversation.
-type ENUM('one_to_one', 'group') Specifies the type of conversation.
-created_at TIMESTAMPZ Timestamp of when the conversation was initiated.
-updated_at TIMESTAMPZ Timestamp of the last activity in the conversation.
+  @CreateDateColumn()
+  created_at: Date;
 
-Export to Sheets
-conversation_participants
-This table links users to conversations.
+  @UpdateDateColumn()
+  updated_at: Date;
+}
 
-Column Data Type Description
-conversation_id UUID (Foreign Key to conversations.id) The ID of the conversation.
-user_id UUID (Foreign Key to users.id) The ID of the participating user.
-joined_at TIMESTAMPZ Timestamp of when the user joined the conversation.
-Primary Key (conversation_id, user_id)
+@Entity('conversation_participants')
+export class ConversationParticipant {
+  @PrimaryColumn('uuid')
+  conversation_id: string;
 
-Export to Sheets
-messages
-This table stores every message sent within any conversation.
+  @PrimaryColumn('uuid')
+  user_id: string;
 
-Column Data Type Description
-id BIGSERIAL (Primary Key) Unique, auto-incrementing identifier for the message.
-conversation_id UUID (Foreign Key to conversations.id) The conversation this message belongs to.
-sender_id UUID (Foreign Key to users.id) The user who sent the message.
-content TEXT The actual text content of the message.
-created_at TIMESTAMPZ Timestamp of when the message was sent.
+  @CreateDateColumn()
+  joined_at: Date;
+}
 
-## message_receipts
+@Entity('messages')
+export class Message {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-message_id BIGINT (Foreign Key to messages.id) The ID of the message.
-user_id UUID (Foreign Key to users.id) The ID of the recipient.
-status ENUM('sent', 'delivered', 'read') The receipt status of the message.
-updated_at TIMESTAMPZ Timestamp of the last status update.
-Primary Key (message_id, user_id)
+  @Column('uuid')
+  conversation_id: string;
 
-## Group-Specific Functionality
+  @Column('uuid')
+  sender_id: string;
 
-## groups
+  @Column('text')
+  content: string;
 
-conversation_id UUID (Primary Key, Foreign Key to conversations.id) Links to the corresponding conversation entry.
-name VARCHAR(255) The name of the group.
-description TEXT A brief description of the group.
-group_icon_url TEXT URL to the group's icon.
-creator_id UUID (Foreign Key to users.id) The user who created the group.
+  @CreateDateColumn()
+  created_at: Date;
+}
 
-## group_members
+@Entity('message_receipts')
+export class MessageReceipt {
+  @PrimaryColumn('bigint')
+  message_id: number;
 
-conversation_id UUID (Foreign Key to conversations.id) The ID of the group conversation.
-user_id UUID (Foreign Key to users.id) The ID of the group member.
-role ENUM('admin', 'member') The role of the user within the group.
-added_by UUID (Foreign Key to users.id) The user who added this member to the group.
-Primary Key (conversation_id, user_id)
+  @PrimaryColumn('uuid')
+  user_id: string;
 
-## Voice and Video Call System 📞📹
+  @Column({ type: 'enum', enum: ['sent', 'delivered', 'read'] })
+  status: 'sent' | 'delivered' | 'read';
 
-## calls
+  @UpdateDateColumn()
+  updated_at: Date;
+}
 
-id UUID (Primary Key) Unique identifier for the call.
-conversation_id UUID (Foreign Key to conversations.id) The conversation in which the call was initiated.
-type ENUM('voice', 'video') The type of call.
-status ENUM('initiated', 'ongoing', 'completed', 'missed') The current status of the call.
-started_at TIMESTAMPZ Timestamp of when the call began.
-ended_at TIMESTAMPZ Timestamp of when the call ended.
+@Entity('message_attachments')
+export class MessageAttachment {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-## call_participants
+  @Column('bigint')
+  message_id: number;
 
-call_id UUID (Foreign Key to calls.id) The ID of the call.
-user_id UUID (Foreign Key to users.id) The ID of the participant.
-status ENUM('ringing', 'connected', 'declined', 'left') The participant's status in the call.
-joined_at TIMESTAMPZ Timestamp of when the participant joined the call.
-left_at TIMESTAMPZ Timestamp of when the participant left the call.
-Primary Key (call_id, user_id)
+  @Column()
+  file_url: string;
 
-## conversations(This table represents a conversation between two or more users.)
+  @Column()
+  file_type: string;
 
-id,
-conversation_name,
-created_at,
-updated_at,
+  @CreateDateColumn()
+  created_at: Date;
+}
 
-## conversation_participants(For group chats, this table stores which users belong to which conversations.)
+@Entity('message_reactions')
+export class MessageReaction {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-id,
-conversation_id,
-user_id,
-joind_at,
+  @Column('bigint')
+  message_id: number;
 
-## message_attachments(If your chat supports media or file attachments (images, videos, etc.).)
+  @Column('uuid')
+  user_id: string;
 
-id,
-message_id,
-file_url,
-file_type,
-create_at,
+  @Column()
+  reaction_type: string;
 
-## message_reaction(If users can react to messages (e.g., like, emoji reactions).)
+  @CreateDateColumn()
+  created_at: Date;
+}
 
-id,
-message_id,
-user_id,
-reactin_type,
-created_at,
+@Entity('groups')
+export class Group {
+  @PrimaryColumn('uuid')
+  conversation_id: string;
 
-## Example Query:
+  @Column()
+  name: string;
 
-# Fetch all messages in a conversation:
+  @Column({ nullable: true })
+  description: string;
 
-# sql query
+  @Column({ nullable: true })
+  group_icon_url: string;
 
-`SELECT m.content, m.created_at, u.username
-FROM messages m
-JOIN users u ON m.sender_id = u.user_id
-WHERE m.conversation_id = ?
-ORDER BY m.created_at;`
+  @Column('uuid')
+  creator_id: string;
+}
 
-boss this is my database design for as like whats app so have any update this design please provide me. and use this code 
+@Entity('group_members')
+export class GroupMember {
+  @PrimaryColumn('uuid')
+  conversation_id: string;
+
+  @PrimaryColumn('uuid')
+  user_id: string;
+
+  @Column({ type: 'enum', enum: ['admin', 'member'], default: 'member' })
+  role: 'admin' | 'member';
+
+  @Column('uuid', { nullable: true })
+  added_by: string;
+}
+
+@Entity('calls')
+export class Call {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column('uuid')
+  conversation_id: string;
+
+  @Column({ type: 'enum', enum: ['voice', 'video'] })
+  type: 'voice' | 'video';
+
+  @Column({ type: 'enum', enum: ['initiated', 'ongoing', 'completed', 'missed'] })
+  status: 'initiated' | 'ongoing' | 'completed' | 'missed';
+
+  @CreateDateColumn()
+  started_at: Date;
+
+  @Column({ nullable: true })
+  ended_at: Date;
+}
+
+@Entity('call_participants')
+export class CallParticipant {
+  @PrimaryColumn('uuid')
+  call_id: string;
+
+  @PrimaryColumn('uuid')
+  user_id: string;
+
+  @Column({ type: 'enum', enum: ['ringing', 'connected', 'declined', 'left'] })
+  status: 'ringing' | 'connected' | 'declined' | 'left';
+
+  @Column({ nullable: true })
+  joined_at: Date;
+
+  @Column({ nullable: true })
+  left_at: Date;
+}
+
+@Entity('screen_share_logs')
+export class ScreenShareLog {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
+
+  @Column('uuid')
+  call_id: string;
+
+  @Column('uuid')
+  sharer_user_id: string;
+
+  @CreateDateColumn()
+  started_at: Date;
+
+  @Column({ nullable: true })
+  ended_at: Date;
+}

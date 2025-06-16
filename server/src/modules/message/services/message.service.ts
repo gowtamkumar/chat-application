@@ -139,20 +139,4 @@ export class MessagesService {
     this.logger.log(`${this.clearMessagesData.name} called`);
     return this.MessagesRepo.clear();
   }
-
-  async initiateMessagesData(): Promise<MessagesEntity[]> {
-    this.logger.log(`${this.initiateMessagesData.name} called`);
-
-    // await this.MessagesRepo.clear()
-    // this.logger.log(`Messages data cleared`);
-    const MessagesData = JSON.parse(
-      fs.readFileSync(
-        `${__dirname}/../../../../../../mock-data/bd-location/Messagess.json`,
-        'utf-8',
-      ),
-    );
-    const Messagess = this.MessagesRepo.create(MessagesData);
-
-    return this.MessagesRepo.save(Messagess);
-  }
 }
