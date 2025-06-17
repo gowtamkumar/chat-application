@@ -16,6 +16,7 @@ import { UserEntity } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ForgotPasswordDto } from '../dtos/forgot-password.dto';
 import { ResetPasswordDto } from '../dtos/reset-password.dto';
+import { RequestContextDto } from '@common/dtos/request-context.dto';
 
 @Injectable()
 export class UserService {
@@ -26,8 +27,13 @@ export class UserService {
     private readonly userRepo: Repository<UserEntity>,
   ) {}
 
-  getUsers(filterUserDto: FilterUserDto): Promise<UserEntity[]> {
+  getUsers(
+    ctx: RequestContextDto,
+    filterUserDto: FilterUserDto,
+  ): Promise<UserEntity[]> {
     this.logger.log(`${this.getUsers.name} Service Called`);
+    console.log('ctx', ctx);
+
     const { name, username, status } = filterUserDto;
     const newQuery: { name: any; username: any; status: any } = {
       name: undefined,

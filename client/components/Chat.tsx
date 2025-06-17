@@ -11,53 +11,50 @@ import { useEffect, useState } from "react";
 export default function HomePage() {
   const route = useRouter();
   const session: any = useSession();
-  const currentUser = {
-    name: "Alice Johnson",
-    avatar: "/user-avatar.png",
-  };
+  const currentUser = session.data?.user.user;
 
-  const chats = [
-    {
-      id: 1,
-      name: "John Doe",
-      avatar: "/user-avatar.png",
-      lastMessage: "Hey, how are you doing today?",
-      lastTime: "10:45 AM",
-      unreadCount: 2,
-      isOnline: true,
-      type: "personal",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "/bot-avatar.png",
-      lastMessage: "Let’s meet tomorrow at 5.",
-      lastTime: "9:30 AM",
-      unreadCount: 0,
-      isOnline: false,
-      type: "personal",
-    },
-    {
-      id: 3,
-      name: "Family Group",
-      avatar: "/group-avatar.png",
-      lastMessage: "Anna: I will be late.",
-      lastTime: "Yesterday",
-      unreadCount: 5,
-      isOnline: true,
-      type: "group",
-    },
-    {
-      id: 4,
-      name: "Work Buddies",
-      avatar: "/group-avatar.png",
-      lastMessage: "Don’t forget the meeting at 3pm.",
-      lastTime: "Mon",
-      unreadCount: 0,
-      isOnline: false,
-      type: "group",
-    },
-  ];
+  // const chats = [
+  //   {
+  //     id: 1,
+  //     name: "John Doe",
+  //     avatar: "/user-avatar.png",
+  //     lastMessage: "Hey, how are you doing today?",
+  //     lastTime: "10:45 AM",
+  //     unreadCount: 2,
+  //     isOnline: true,
+  //     type: "personal",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Jane Smith",
+  //     avatar: "/bot-avatar.png",
+  //     lastMessage: "Let’s meet tomorrow at 5.",
+  //     lastTime: "9:30 AM",
+  //     unreadCount: 0,
+  //     isOnline: false,
+  //     type: "personal",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Family Group",
+  //     avatar: "/group-avatar.png",
+  //     lastMessage: "Anna: I will be late.",
+  //     lastTime: "Yesterday",
+  //     unreadCount: 5,
+  //     isOnline: true,
+  //     type: "group",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Work Buddies",
+  //     avatar: "/group-avatar.png",
+  //     lastMessage: "Don’t forget the meeting at 3pm.",
+  //     lastTime: "Mon",
+  //     unreadCount: 0,
+  //     isOnline: false,
+  //     type: "group",
+  //   },
+  // ];
 
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -73,11 +70,11 @@ export default function HomePage() {
     const getData = await fetch("http://localhost:3900/api/v1/users", {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.data?.user?.token}`,
+        Authorization: `Bearer ${session.data?.user?.accessToken}`,
       },
     });
-    const users = await getData.json();
-    setUsers(users.data);
+    const newusers = await getData.json();
+    setUsers(newusers.data);
   };
 
   // Filter chats based on active tab and search query
@@ -105,7 +102,7 @@ export default function HomePage() {
             aria-label="Toggle profile menu"
           >
             <img
-              src={currentUser.avatar}
+              src={currentUser.image}
               alt={currentUser.name}
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -113,8 +110,9 @@ export default function HomePage() {
               {currentUser.name}
             </span>
             <svg
-              className={`w-4 h-4 text-indigo-700 transition-transform ${profileDropdownOpen ? "rotate-180" : "rotate-0"
-                }`}
+              className={`w-4 h-4 text-indigo-700 transition-transform ${
+                profileDropdownOpen ? "rotate-180" : "rotate-0"
+              }`}
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -159,9 +157,10 @@ export default function HomePage() {
         <button
           onClick={() => setActiveTab("all")}
           className={`flex-1 py-3 text-center font-semibold transition
-            ${activeTab === "all"
-              ? "border-b-4 border-indigo-600 text-indigo-700"
-              : "text-gray-500 hover:text-indigo-600"
+            ${
+              activeTab === "all"
+                ? "border-b-4 border-indigo-600 text-indigo-700"
+                : "text-gray-500 hover:text-indigo-600"
             }`}
         >
           All
@@ -169,9 +168,10 @@ export default function HomePage() {
         <button
           onClick={() => setActiveTab("group")}
           className={`flex-1 py-3 text-center font-semibold transition
-            ${activeTab === "group"
-              ? "border-b-4 border-indigo-600 text-indigo-700"
-              : "text-gray-500 hover:text-indigo-600"
+            ${
+              activeTab === "group"
+                ? "border-b-4 border-indigo-600 text-indigo-700"
+                : "text-gray-500 hover:text-indigo-600"
             }`}
         >
           Groups
@@ -197,23 +197,22 @@ export default function HomePage() {
           </div>
         ) : (
           filteredChats.map((chat: any) => {
-            console.log("chat", chat);
-
             return (
               <div
                 key={chat.id}
                 onClick={() => {
                   const link =
                     chat.type === "group"
-                      ? `/group-chat/${chat.id}`
-                      : `/single-chat/${chat.id}`;
+                      ? `/group/${chat.id}`
+                      : `/chat/${chat.id}`;
                   route.push(link);
                 }}
                 className={`flex items-center px-6 py-4 border-b cursor-pointer transition
-              ${selectedChatId === chat.id
-                    ? "bg-indigo-50 border-indigo-300"
-                    : "hover:bg-indigo-100"
-                  }`}
+              ${
+                selectedChatId === chat.id
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "hover:bg-indigo-100"
+              }`}
               >
                 {/* Avatar with online badge */}
                 <div className="relative">

@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RequestContextDto } from '@common/dtos/request-context.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -37,8 +38,11 @@ export class UserController {
   }
 
   @Get('/')
-  async getUsers(@Query() filterUserDto: FilterUserDto) {
-    const users = await this.userService.getUsers(filterUserDto);
+  async getUsers(
+    ctx: RequestContextDto,
+    @Query() filterUserDto: FilterUserDto,
+  ) {
+    const users = await this.userService.getUsers(ctx, filterUserDto);
 
     return {
       success: true,

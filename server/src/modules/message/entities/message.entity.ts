@@ -14,8 +14,11 @@ export class MessagesEntity {
   @Column({ name: 'sender_id', type: 'uuid', nullable: true })
   senderId: string;
 
-  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
-  conversationId: string;
+  // @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  // conversationId: string;
+
+  @Column({ name: 'user_id', type: 'uuid', nullable: true })
+  userId: string;
 
   @Column({ type: 'text' })
   content: string;

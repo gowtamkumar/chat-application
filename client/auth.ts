@@ -10,13 +10,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       name: "credentials",
-
       async authorize(credentials) {
-        console.log("testing....");
-
-        console.log("credentials",  `${process.env.NEXT_PUBLIC_API_URL}/auth/login`);
-        
-        
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
           {
@@ -27,10 +21,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         );
         const user = await res.json();
         console.log("user", user);
-        
+
         try {
           if (res.ok && user.data) {
-            const newuser = { ...user.data, accessToken: user.accessToken };
+            const newuser = {
+              ...user.data,
+              accessToken: user.data.accessToken,
+            };
             return newuser;
           } else {
             throw new Error("Invalid Login Credentials");

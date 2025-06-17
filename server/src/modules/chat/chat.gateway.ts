@@ -57,29 +57,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('Client disconnected:', client.id);
   }
 
-  @SubscribeMessage('chat message')
+  @SubscribeMessage('single_chat')
   async handleMessage(
-    @MessageBody() content: string,
+    @MessageBody() content: any,
     @ConnectedSocket() client: any,
   ): Promise<void> {
-    console.log(content);
-    console.log(client.user);
-    // id: '472cd74b-f301-41b0-aa8a-91ecf07e7a8a',
-    const sender = {
-      id: 'd947a179-4061-4a37-a046-afecfda406f1',
-      email: 'gowam@gmail.com',
-    };
     const message = this.messageRepo.create({
-      content,
-      senderId: sender.id,
+      content: content.message,
+      senderId: content.senderId,
+      userId: client.data.user.id,
     });
-    console.log('message0', message);
 
-    await this.messageRepo.save(message);
-
-    this.server.emit('chat message', {
+    const resMessage = await this.messageRepo.save(message);
+    this.server.emit('single_chat', {
       content: message.content,
-      sender,
+      senderId: resMessage.senderId,
+      userId: resMessage.userId,
       createdAt: message.createdAt,
     });
   }

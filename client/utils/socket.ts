@@ -1,20 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { auth } from "@/auth";
-import { io } from "socket.io-client";
+// utils/socket.ts
+import { io, Socket } from "socket.io-client";
 
-const serverPort =
-  process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:3900";
+export const createSocket = (token: string): Socket => {
+  const serverPort =
+    process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3900";
 
-// Get session and then connect (async/await required)
-const socketPromise = (async () => {
-  const session: any = await auth();
-  const socket = io(serverPort, {
+  return io(serverPort, {
     auth: {
-      token: session?.data?.user?.token,
+      token,
     },
   });
-  return socket;
-})();
-
-export default socketPromise;
-
+};

@@ -1,138 +1,159 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
-import socket from "@/utils/socket";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { createSocket } from "@/utils/socket";
 
-type User = {
-  id: number | string;
-  name: string;
-  avatar: string;
-};
+// type User = {
+//   id: number | string;
+//   name: string;
+//   avatar: string;
+// };
 
-type Message = {
-  id: number | string;
-  userId: number | string;
-  content?: string;
-  audioUrl?: string;
-  imageUrl?: string;
-};
+// type Message = {
+//   id: number | string;
+//   userId: number | string;
+//   content?: string;
+//   audioUrl?: string;
+//   imageUrl?: string;
+// };
 
 export default function SingleChatPage() {
-  const usePrams = useParams()
-  const users: User[] = [
-    {
-      id: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
-      name: "John Doe",
-      avatar: "/user-avatar.png",
-    },
-    {
-      id: "d947a179-4061-4a37-a046-afecfda406f1",
-      name: "Jane Smith",
-      avatar: "/bot-avatar.png",
-    },
-  ];
+  const session: any = useSession();
+  const usePrams = useParams();
+  const [users, setUsers] = useState<any[]>([]);
+  // const users: User[] = [
+  //   {
+  //     id: "472cd74b-f301-41b0-aa8a-91ecf07e7a8a",
+  //     name: "John Doe",
+  //     avatar: "/user-avatar.png",
+  //   },
+  //   {
+  //     id: "d947a179-4061-4a37-a046-afecfda406f1",
+  //     name: "Jane Smith",
+  //     avatar: "/bot-avatar.png",
+  //   },
+  // ];
 
-  console.log("usePrams", usePrams);
-  
-
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
 
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [callType, setCallType] = useState<"audio" | "video" | null>(null);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  // const [callType, setCallType] = useState<"audio" | "video" | null>(null);
+  // const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   // Audio recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const audioChunks = useRef<Blob[]>([]);
+  // const [isRecording, setIsRecording] = useState(false);
+  // const mediaRecorder = useRef<MediaRecorder | null>(null);
+  // const audioChunks = useRef<Blob[]>([]);
 
   // Camera capture state
-  const [cameraOpen, setCameraOpen] = useState(false);
-  const cameraStream = useRef<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // const [cameraOpen, setCameraOpen] = useState(false);
+  // // const cameraStream = useRef<MediaStream | null>(null);
+  // const videoRef = useRef<HTMLVideoElement>(null);
+  // const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const session: any = useSession();
 
-  const currentUserId = "d947a179-4061-4a37-a046-afecfda406f1";
-  const chatPartner = users.find((u) => u.id !== currentUserId)!;
+  const currentUserId = session.data?.user?.user?.id;
+
+  const chatPartner = users.find((u) => u.id === usePrams.id);
+  console.log("chatPartner", chatPartner);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    if (videoRef.current && localStream) {
-      videoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
+  const fetchData = async () => {
+    const getData = await fetch("http://localhost:3900/api/v1/users", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.data?.user?.accessToken}`,
+      },
+    });
+    const newusers = await getData.json();
+    setUsers(newusers.data);
+  };
+
+  // useEffect(() => {
+  //   if (videoRef.current && localStream) {
+  //     videoRef.current.srcObject = localStream;
+  //   }
+  // }, [localStream]);
 
   // Start camera stream when camera modal opens
+  // useEffect(() => {
+  //   if (cameraOpen) {
+  //     (async () => {
+  //       try {
+  //         const stream = await navigator.mediaDevices.getUserMedia({
+  //           video: true,
+  //         });
+  //         cameraStream.current = stream;
+  //         if (videoRef.current) {
+  //           videoRef.current.srcObject = stream;
+  //         }
+  //       } catch (err) {
+  //         alert("Could not access camera.");
+  //         setCameraOpen(false);
+  //         console.error(err);
+  //       }
+  //     })();
+  //   } else {
+  //     // Stop camera when closing modal
+  //     if (cameraStream.current) {
+  //       cameraStream.current.getTracks().forEach((track) => track.stop());
+  //       cameraStream.current = null;
+  //     }
+  //   }
+  // }, [cameraOpen]);
+
   useEffect(() => {
-    if (cameraOpen) {
-      (async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          cameraStream.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (err) {
-          alert("Could not access camera.");
-          setCameraOpen(false);
-          console.error(err);
-        }
-      })();
-    } else {
-      // Stop camera when closing modal
-      if (cameraStream.current) {
-        cameraStream.current.getTracks().forEach((track) => track.stop());
-        cameraStream.current = null;
-      }
+    if (session.status === "authenticated") {
+      getMessage();
+      const socket = createSocket(session.data.user.accessToken);
+
+      socket.on("connect", () => {
+        console.log("Connected:", socket.id);
+      });
+
+      socket.on("single_chat", (msg) => {
+        setMessages((prev) => [...prev, msg]);
+      });
+
+      return () => {
+        socket.disconnect();
+      };
     }
-  }, [cameraOpen]);
-
-  useEffect(() => {
-    getMessage();
-    socket.on("chat message", (msg) => {
-      console.log("msg", msg);
-
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    return () => {
-      socket.off("chat message");
-    };
   }, []);
 
   const getMessage = async () => {
+    console.log("message testing...");
     const getData = await fetch("http://localhost:3900/api/v1/messagess", {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.data?.user?.token}`,
+        Authorization: `Bearer ${session.data?.user?.accessToken}`,
       },
     });
     const message = await getData.json();
-    console.log("message", message);
-
     setMessages(message.data);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputText.trim()) {
-      console.log("input", inputText);
-
-      socket.emit("chat message", inputText);
+      const socket = createSocket(session.data.user.accessToken);
+      socket.emit("single_chat", {
+        message: inputText,
+        senderId: usePrams.id,
+      });
       setInputText("");
       setShowEmojiPicker(false);
     }
@@ -143,130 +164,130 @@ export default function SingleChatPage() {
   };
 
   // Audio recording handlers
-  const startRecording = async () => {
-    if (!navigator.mediaDevices || !window.MediaRecorder) {
-      alert("Audio recording is not supported in this browser.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
-      audioChunks.current = [];
+  // const startRecording = async () => {
+  //   if (!navigator.mediaDevices || !window.MediaRecorder) {
+  //     alert("Audio recording is not supported in this browser.");
+  //     return;
+  //   }
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  //     mediaRecorder.current = new MediaRecorder(stream);
+  //     audioChunks.current = [];
 
-      mediaRecorder.current.ondataavailable = (event) => {
-        audioChunks.current.push(event.data);
-      };
+  //     mediaRecorder.current.ondataavailable = (event) => {
+  //       audioChunks.current.push(event.data);
+  //     };
 
-      mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            userId: currentUserId,
-            audioUrl,
-          },
-        ]);
-      };
+  //     mediaRecorder.current.onstop = () => {
+  //       const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+  //       const audioUrl = URL.createObjectURL(audioBlob);
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         {
+  //           id: prev.length + 1,
+  //           userId: currentUserId,
+  //           audioUrl,
+  //         },
+  //       ]);
+  //     };
 
-      mediaRecorder.current.start();
-      setIsRecording(true);
-    } catch (err) {
-      alert("Could not start recording.");
-      console.error(err);
-    }
-  };
+  //     mediaRecorder.current.start();
+  //     setIsRecording(true);
+  //   } catch (err) {
+  //     alert("Could not start recording.");
+  //     console.error(err);
+  //   }
+  // };
 
-  const stopRecording = () => {
-    mediaRecorder.current?.stop();
-    mediaRecorder.current = null;
-    setIsRecording(false);
-  };
+  // const stopRecording = () => {
+  //   mediaRecorder.current?.stop();
+  //   mediaRecorder.current = null;
+  //   setIsRecording(false);
+  // };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
+  // const toggleRecording = () => {
+  //   if (isRecording) {
+  //     stopRecording();
+  //   } else {
+  //     startRecording();
+  //   }
+  // };
 
-  const startCall = async (type: "audio" | "video") => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(
-        type === "video"
-          ? { video: true, audio: true }
-          : { video: false, audio: true }
-      );
-      setLocalStream(stream);
-      setCallType(type);
-    } catch (err) {
-      alert("Failed to access media devices.");
-      console.error(err);
-    }
-  };
+  // const startCall = async (type: "audio" | "video") => {
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia(
+  //       type === "video"
+  //         ? { video: true, audio: true }
+  //         : { video: false, audio: true }
+  //     );
+  //     setLocalStream(stream);
+  //     setCallType(type);
+  //   } catch (err) {
+  //     alert("Failed to access media devices.");
+  //     console.error(err);
+  //   }
+  // };
 
-  const stopCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
-    }
-    setLocalStream(null);
-    setCallType(null);
-  };
+  // const stopCall = () => {
+  //   if (localStream) {
+  //     localStream.getTracks().forEach((track) => track.stop());
+  //   }
+  //   setLocalStream(null);
+  //   setCallType(null);
+  // };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      console.log("Selected file:", files[0]);
-    }
-  };
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (files && files.length > 0) {
+  //     console.log("Selected file:", files[0]);
+  //   }
+  // };
 
   const getUser = (id: number | string) => users.find((u) => u.id === id);
 
   // Capture photo from webcam
-  const capturePhoto = () => {
-    if (!canvasRef.current || !videoRef.current) return;
+  // const capturePhoto = () => {
+  //   if (!canvasRef.current || !videoRef.current) return;
 
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+  //   const video = videoRef.current;
+  //   const canvas = canvasRef.current;
+  //   canvas.width = video.videoWidth;
+  //   canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageUrl = canvas.toDataURL("image/png");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          userId: currentUserId,
-          imageUrl,
-        },
-      ]);
-      setCameraOpen(false);
-    }
-  };
+  //   const ctx = canvas.getContext("2d");
+  //   if (ctx) {
+  //     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  //     const imageUrl = canvas.toDataURL("image/png");
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         id: prev.length + 1,
+  //         userId: currentUserId,
+  //         imageUrl,
+  //       },
+  //     ]);
+  //     setCameraOpen(false);
+  //   }
+  // };
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
         <div className="flex items-center space-x-4">
           <img
-            src={chatPartner.avatar}
-            alt={chatPartner.name}
+            src={chatPartner?.image}
+            alt={chatPartner?.name}
             className="w-12 h-12 rounded-full border-2 border-blue-500"
           />
           <div>
             <div className="font-semibold text-lg text-gray-700">
-              {chatPartner.name}
+              {chatPartner?.name}
             </div>
             <div className="text-sm text-gray-400">Online</div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 text-blue-500 text-xl">
+        {/* <div className="flex items-center space-x-4 text-blue-500 text-xl">
           <button
             title="Start Voice Call"
             className="hover:text-blue-600"
@@ -285,51 +306,48 @@ export default function SingleChatPage() {
           >
             🎥
           </button>
-        </div>
+        </div> */}
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => {
+        {(messages || []).map((msg, idx: number) => {
           const user = getUser(msg?.userId);
           const isCurrentUser = msg.userId === currentUserId;
-
           return (
             <div
-              key={msg.id}
-              className={`flex items-start space-x-2 ${
-                isCurrentUser ? "justify-end" : "justify-start"
-              }`}
+              key={idx}
+              className={`flex items-start space-x-2 ${isCurrentUser ? "justify-end" : "justify-start"
+                }`}
             >
               {!isCurrentUser && (
                 <img
-                  src={user?.avatar}
+                  src={user?.image}
                   alt={user?.name}
                   className="w-8 h-8 rounded-full"
                 />
               )}
 
               <div
-                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${
-                  isCurrentUser
+                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${isCurrentUser
                     ? "bg-blue-500 text-white"
                     : "bg-white text-gray-700"
-                }`}
+                  }`}
               >
                 {!isCurrentUser && (
                   <div className="text-xs font-semibold mb-1 text-gray-500">
                     {user?.name}
                   </div>
                 )}
-                {msg.content && <p>{msg.content}</p>}
-                {msg.audioUrl && (
+                {msg?.content && <p>{msg?.content}</p>}
+                {msg?.audioUrl && (
                   <audio controls className="w-full">
-                    <source src={msg.audioUrl} />
+                    <source src={msg?.audioUrl} />
                     Your browser does not support the audio element.
                   </audio>
                 )}
-                {msg.imageUrl && (
+                {msg?.imageUrl && (
                   <img
-                    src={msg.imageUrl}
+                    src={msg?.imageUrl}
                     alt="Sent photo"
                     className="rounded-md max-w-xs"
                   />
@@ -356,7 +374,7 @@ export default function SingleChatPage() {
           </div>
         )}
         <div className="flex items-center space-x-2 p-2 rounded-xl border-2 border-transparent transition focus-within:border-blue-400 focus-within:bg-blue-50">
-          <input
+          {/* <input
             type="file"
             ref={fileInputRef}
             className="hidden"
@@ -369,7 +387,7 @@ export default function SingleChatPage() {
             aria-label="Attach file"
           >
             📎
-          </button>
+          </button> */}
 
           <button
             onClick={() => setShowEmojiPicker((prev) => !prev)}
@@ -381,26 +399,25 @@ export default function SingleChatPage() {
           </button>
 
           {/* Camera button */}
-          <button
+          {/* <button
             onClick={() => setCameraOpen(true)}
             className="text-blue-500 hover:text-blue-600"
             type="button"
             aria-label="Open camera"
           >
             📷
-          </button>
+          </button> */}
 
           {/* Audio record button */}
-          <button
+          {/* <button
             onClick={toggleRecording}
-            className={`${
-              isRecording ? "bg-red-600 text-white" : "text-blue-500"
-            } hover:text-blue-600 px-2 py-1 rounded`}
+            className={`${isRecording ? "bg-red-600 text-white" : "text-blue-500"
+              } hover:text-blue-600 px-2 py-1 rounded`}
             type="button"
             aria-label="Record audio"
           >
             {isRecording ? "■ Recording" : "🎙️"}
-          </button>
+          </button> */}
 
           <input
             type="text"
@@ -426,7 +443,7 @@ export default function SingleChatPage() {
       </footer>
 
       {/* Camera Modal */}
-      {cameraOpen && (
+      {/* {cameraOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-50"
           role="dialog"
@@ -464,10 +481,10 @@ export default function SingleChatPage() {
           </div>
           <canvas ref={canvasRef} className="hidden" />
         </div>
-      )}
+      )} */}
 
       {/* Call Modal */}
-      {callType && (
+      {/* {callType && (
         <div
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
           role="dialog"
@@ -506,7 +523,7 @@ export default function SingleChatPage() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
