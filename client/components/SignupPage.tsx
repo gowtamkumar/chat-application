@@ -51,9 +51,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-200 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br text-black px-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
+        <h1 className="text-3xl font-bold mb-6 text-center">
           Create an Account
         </h1>
 
