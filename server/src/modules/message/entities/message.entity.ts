@@ -17,6 +17,9 @@ export class MessagesEntity {
   // @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
   // conversationId: string;
 
+  @Column({ name: 'group_id', type: 'uuid', nullable: true })
+  groupId?: string;
+
   @Column({ name: 'user_id', type: 'uuid', nullable: true })
   userId: string;
 

@@ -14,7 +14,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserEntity } from '@admin/user/entities/user.entity';
 import { MessagesEntity } from '@modules/message/entities/message.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
@@ -30,7 +29,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   constructor(
-    @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
     @InjectRepository(MessagesEntity)
     private messageRepo: Repository<MessagesEntity>,
     private jwtService: JwtService,
@@ -55,6 +53,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     console.log('Client disconnected:', client.id);
+  }
+
+  @SubscribeMessage('join_group')
+  handleJoinGroup(
+    @MessageBody() data: { groupId: string },
+    @ConnectedSocket() client: Socket,
+  ): void {
+    const roomName = `group-${data.groupId}`;
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    client.join(roomName);
+    client.emit('joined_group', { groupId: data.groupId, roomName });
+    console.log(`User ${client.id} joined group ${roomName}`);
+  }
+
+  @SubscribeMessage('group_chat')
+  async handleGroupChat(
+    @MessageBody()
+    data: { groupId: string; message: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const roomName = `group-${data.groupId}`;
+
+    // Save to DB (optional)
+    const savedMessage = this.messageRepo.create({
+      content: data.message,
+      // groupId: data.groupId,
+      userId: client.data.user.id,
+    });
+    await this.messageRepo.save(savedMessage);
+
+    // Send to the group
+    this.server.to(roomName).emit('group_chat', {
+      groupId: data.groupId,
+      message: data.message,
+      userId: client.data.user.id,
+      createdAt: savedMessage.createdAt,
+    });
   }
 
   @SubscribeMessage('single_chat')
