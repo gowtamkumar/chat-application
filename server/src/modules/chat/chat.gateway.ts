@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -19,96 +20,103 @@ import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-@WebSocketGateway({
-  cors: {
-    origin: '*', // for dev only
-  },
-})
+@WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+
+  private userSockets: Map<string, string> = new Map(); // userId -> socketId
 
   constructor(
     @InjectRepository(MessagesEntity)
     private messageRepo: Repository<MessagesEntity>,
     private jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private configService: ConfigService,
   ) {}
 
   handleConnection(client: Socket) {
-    console.log('Client connected:', client.id);
     try {
       const token = client.handshake.auth.token;
       if (!token) throw new UnauthorizedException('Token not found');
 
       const user = this.jwtService.verify(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
-      }); // ✅ replace with config
-      client.data.user = user; // save the user in socket session
+      });
+
+      client.data.user = user;
+      this.userSockets.set(user.id, client.id);
+      console.log(`User connected: ${user.id} (${client.id})`);
     } catch (err) {
-      console.log('Unauthorized socket connection');
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
-    console.log('Client disconnected:', client.id);
+    const userId = client.data.user?.id;
+    if (userId) {
+      this.userSockets.delete(userId);
+    }
+    console.log(`User disconnected: ${userId}`);
   }
 
+  // ✅ Join group
   @SubscribeMessage('join_group')
   handleJoinGroup(
     @MessageBody() data: { groupId: string },
     @ConnectedSocket() client: Socket,
-  ): void {
-    const roomName = `group-${data.groupId}`;
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    client.join(roomName);
-    client.emit('joined_group', { groupId: data.groupId, roomName });
-    console.log(`User ${client.id} joined group ${roomName}`);
+  ) {
+    const room = `group-${data.groupId}`;
+    client.join(room);
+    client.emit('joined_group', { groupId: data.groupId });
+    console.log(`User ${client.data.user.id} joined ${room}`);
   }
 
+  // ✅ Group chat
   @SubscribeMessage('group_chat')
   async handleGroupChat(
-    @MessageBody()
-    data: { groupId: string; message: string },
+    @MessageBody() data: { groupId: string; message: string },
     @ConnectedSocket() client: Socket,
-  ): Promise<void> {
-    const roomName = `group-${data.groupId}`;
+  ) {
+    const room = `group-${data.groupId}`;
 
-    // Save to DB (optional)
     const savedMessage = this.messageRepo.create({
       content: data.message,
-      // groupId: data.groupId,
-      userId: client.data.user.id,
+      groupId: data.groupId,
+      senderId: client.data.user.id,
     });
     await this.messageRepo.save(savedMessage);
 
-    // Send to the group
-    this.server.to(roomName).emit('group_chat', {
+    this.server.to(room).emit('group_chat', {
       groupId: data.groupId,
       message: data.message,
-      userId: client.data.user.id,
+      senderId: client.data.user.id,
       createdAt: savedMessage.createdAt,
     });
   }
 
+  // ✅ Single chat
   @SubscribeMessage('single_chat')
-  async handleMessage(
-    @MessageBody() content: any,
-    @ConnectedSocket() client: any,
-  ): Promise<void> {
-    const message = this.messageRepo.create({
-      content: content.message,
-      senderId: content.senderId,
-      userId: client.data.user.id,
-    });
+  async handleSingleChat(
+    @MessageBody() data: { receiverId: string; message: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const senderId = client.data.user.id;
+    const receiverSocketId = this.userSockets.get(data.receiverId);
 
-    const resMessage = await this.messageRepo.save(message);
-    this.server.emit('single_chat', {
-      content: message.content,
-      senderId: resMessage.senderId,
-      userId: resMessage.userId,
-      createdAt: message.createdAt,
+    const savedMessage = this.messageRepo.create({
+      content: data.message,
+      senderId,
+      receiverId: data.receiverId,
     });
+    await this.messageRepo.save(savedMessage);
+
+    if (receiverSocketId) {
+      this.server.to(receiverSocketId).emit('single_chat', {
+        senderId,
+        receiverId: data.receiverId,
+        message: data.message,
+        createdAt: savedMessage.createdAt,
+      });
+    }
   }
 }

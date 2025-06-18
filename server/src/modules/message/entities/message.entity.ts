@@ -20,8 +20,8 @@ export class MessagesEntity {
   @Column({ name: 'group_id', type: 'uuid', nullable: true })
   groupId?: string;
 
-  @Column({ name: 'user_id', type: 'uuid', nullable: true })
-  userId: string;
+  @Column({ name: 'receiver_id', type: 'uuid', nullable: true })
+  receiverId: string;
 
   @Column({ type: 'text' })
   content: string;

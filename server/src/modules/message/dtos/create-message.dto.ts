@@ -1,4 +1,4 @@
-import { IsDefined, IsNotEmpty, IsString } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateMessagesDto {
   @IsDefined()
@@ -10,6 +10,16 @@ export class CreateMessagesDto {
   @IsString()
   @IsNotEmpty()
   senderId: string;
+
+  @IsDefined()
+  @IsString()
+  @IsNotEmpty()
+  receiverId: string;
+
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  groupId: string;
 
   @IsDefined()
   @IsString()

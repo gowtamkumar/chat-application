@@ -11,5 +11,11 @@ export class MessagesResponseDto {
   senderId: string;
 
   @Expose()
+  receiverId: string;
+
+  @Expose()
+  groupId: string;
+
+  @Expose()
   content: string;
 }

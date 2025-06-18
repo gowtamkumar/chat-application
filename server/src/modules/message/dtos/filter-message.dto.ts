@@ -6,4 +6,10 @@ export class FilterMessagesDto {
 
   @IsString()
   senderId: string;
+
+  @IsString()
+  receiverId: string;
+
+  @IsString()
+  groupId: string;
 }
