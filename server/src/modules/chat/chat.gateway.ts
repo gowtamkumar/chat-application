@@ -103,6 +103,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const senderId = client.data.user.id;
     const receiverSocketId = this.userSockets.get(data.receiverId);
 
+    console.log('receiverSocketId', receiverSocketId);
+
     const savedMessage = this.messageRepo.create({
       content: data.message,
       senderId,
@@ -110,13 +112,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
     await this.messageRepo.save(savedMessage);
 
-    if (receiverSocketId) {
-      this.server.to(receiverSocketId).emit('single_chat', {
-        senderId,
-        receiverId: data.receiverId,
-        message: data.message,
-        createdAt: savedMessage.createdAt,
-      });
-    }
+    this.server.emit('single_chat', {
+      senderId,
+      receiverId: data.receiverId,
+      message: data.message,
+      createdAt: savedMessage.createdAt,
+    });
   }
 }
