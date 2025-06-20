@@ -101,9 +101,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     const senderId = client.data.user.id;
-    const receiverSocketId = this.userSockets.get(data.receiverId);
-
-    console.log('receiverSocketId', receiverSocketId);
 
     const savedMessage = this.messageRepo.create({
       content: data.message,
