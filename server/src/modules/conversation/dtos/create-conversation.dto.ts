@@ -1,7 +1,12 @@
-import { IsDefined, IsEnum } from 'class-validator';
-import { ConversationTypeEnum } from '../enums/type.enum';
+import { IsDefined, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { ConversationTypeEnum } from '../enums/conversation-type.enum';
 
 export class CreateConversationDto {
+  @IsDefined()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @IsDefined()
   @IsEnum(ConversationTypeEnum)
   type: ConversationTypeEnum;

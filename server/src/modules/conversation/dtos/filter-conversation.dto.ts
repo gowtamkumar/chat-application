@@ -1,7 +1,10 @@
-import { IsEnum } from 'class-validator';
-import { ConversationTypeEnum } from '../enums/type.enum';
+import { IsEnum, IsString } from 'class-validator';
+import { ConversationTypeEnum } from '../enums/conversation-type.enum';
 
 export class FilterConversationDto {
+  @IsString()
+  name: string;
+
   @IsEnum(ConversationTypeEnum)
   Type: ConversationTypeEnum;
 }

@@ -14,14 +14,8 @@ export class MessagesEntity {
   @Column({ name: 'sender_id', type: 'uuid', nullable: true })
   senderId: string;
 
-  // @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
-  // conversationId: string;
-
-  @Column({ name: 'group_id', type: 'uuid', nullable: true })
-  groupId?: string;
-
-  @Column({ name: 'receiver_id', type: 'uuid', nullable: true })
-  receiverId: string;
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId: string;
 
   @Column({ type: 'text' })
   content: string;

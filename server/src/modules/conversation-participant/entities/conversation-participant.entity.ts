@@ -18,4 +18,14 @@ export class ConversationParticipantEntity {
 
   @CreateDateColumn({ name: 'joined_at', type: 'timestamp with time zone' })
   joinedAt: string;
+
+  @Column({ type: 'enum', enum: ['admin', 'member'], default: 'member' })
+  role: 'admin' | 'member';
+
+  @Column({ type: 'uuid', nullable: true })
+  added_by: string;
+
+  // @ManyToOne(() => User)
+  // @JoinColumn({ name: 'added_by' })
+  // addedByUser: User;
 }

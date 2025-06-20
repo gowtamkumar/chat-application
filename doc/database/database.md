@@ -27,8 +27,13 @@ CREATE TABLE conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type TEXT CHECK (type IN ('one_to_one', 'group')) NOT NULL,
     conversation_name VARCHAR(255), -- Optional for group chats
+    description TEXT,               -- Group description
+    group_icon_url TEXT,           -- Group icon
+    creator_id UUID,               -- Who created the group
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 👥 conversation_participants
@@ -36,11 +41,16 @@ CREATE TABLE conversations (
 CREATE TABLE conversation_participants (
     conversation_id UUID NOT NULL,
     user_id UUID NOT NULL,
+    role TEXT CHECK (role IN ('admin', 'member')) DEFAULT 'member', -- Only used for groups
+    added_by UUID,         -- Who added this user (null for self-joined or one-to-one)
     joined_at TIMESTAMPTZ DEFAULT NOW(),
+
     PRIMARY KEY (conversation_id, user_id),
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
 );
+
 
 📨 messages
 
@@ -50,6 +60,7 @@ CREATE TABLE messages (
     sender_id UUID NOT NULL,
     content TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -85,29 +96,6 @@ CREATE TABLE message_reactions (
     UNIQUE (message_id, user_id, reaction_type),
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-👨‍👩‍👧 groups
-CREATE TABLE groups (
-    conversation_id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    group_icon_url TEXT,
-    creator_id UUID NOT NULL,
-    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL
-);
-
-👤 group_members
-CREATE TABLE group_members (
-    conversation_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    role TEXT CHECK (role IN ('admin', 'member')) DEFAULT 'member',
-    added_by UUID,
-    PRIMARY KEY (conversation_id, user_id),
-    FOREIGN KEY (conversation_id) REFERENCES groups(conversation_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 📞 calls

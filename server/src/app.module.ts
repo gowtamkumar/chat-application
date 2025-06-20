@@ -8,7 +8,6 @@ import { MessagesModule } from '@modules/message/message.module';
 import { ContactModule } from '@modules/contact/contact.module';
 import { ConversationParticipantModule } from '@modules/conversation-participant/conversation-participant.module';
 import { MessageReceiptsModule } from '@modules/message-receipt/message-receipt.module';
-import { GroupModule } from '@modules/group/group.module';
 import { CallModule } from '@modules/call/call.module';
 import { CallParticipantModule } from '@modules/call-participant/call-participant.module';
 import { MessageReactionsModule } from '@modules/message-reaction/message-reaction.module';
@@ -27,7 +26,6 @@ import { MessageReactionsModule } from '@modules/message-reaction/message-reacti
     OtherModule,
     MessagesModule,
     MessageReceiptsModule,
-    GroupModule,
     ContactModule,
     ConversationParticipantModule,
   ],
