@@ -94,26 +94,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  // ✅ Single chat
   @SubscribeMessage('single_chat')
   async handleSingleChat(
     @MessageBody() data: { receiverId: string; message: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const senderId = client.data.user.id;
+    try {
+      const senderId = client.data.user.id;
 
-    const savedMessage = this.messageRepo.create({
-      content: data.message,
-      senderId,
-      receiverId: data.receiverId,
-    });
-    await this.messageRepo.save(savedMessage);
+      // Save message to DB
+      const savedMessage = this.messageRepo.create({
+        content: data.message,
+        senderId,
+        receiverId: data.receiverId,
+      });
+      await this.messageRepo.save(savedMessage);
 
-    this.server.emit('single_chat', {
-      senderId,
-      receiverId: data.receiverId,
-      message: data.message,
-      createdAt: savedMessage.createdAt,
-    });
+      // ✅ Get receiver's socket ID
+      const receiverSocketId = this.userSockets.get(data.receiverId);
+
+      // ✅ Send to receiver only
+      if (receiverSocketId) {
+        this.server.to(receiverSocketId).emit('single_chat', {
+          senderId,
+          receiverId: data.receiverId,
+          message: data.message,
+          createdAt: savedMessage.createdAt,
+        });
+      }
+
+      // ✅ Optional: Notify sender too (for instant UI update)
+      client.emit('single_chat_sent', {
+        receiverId: data.receiverId,
+        message: data.message,
+        createdAt: savedMessage.createdAt,
+      });
+    } catch (error) {
+      console.error('Error in single_chat:', error);
+      client.emit('error', { message: 'Failed to send message' });
+    }
   }
 }
