@@ -8,10 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN yarn install
 
 # # Install Nest CLI globally
-# RUN npm install -g @nestjs/cli
+# RUN yarn install -g @nestjs/cli
 
 # Copy the rest of your app
 COPY . .
@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 3900
 
 # Start development server
-CMD ["npm", "run", "start:dev"]
+CMD ["yarn", "run", "start:dev"]
