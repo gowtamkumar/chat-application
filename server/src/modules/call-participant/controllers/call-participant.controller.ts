@@ -1,4 +1,5 @@
 import { JwtAuthGuard } from '@admin/auth/guards/jwt-auth.guard';
+import { RequestContext } from '@common/decorators/current-user.decorator';
 import { RequestContextDto } from '@common/dtos/request-context.dto';
 import {
   Body,
@@ -18,11 +19,10 @@ import {
   FilterCallParticipantsDto,
   UpdateCallParticipantsDto,
 } from '../dtos';
-import { RequestContext } from '@common/decorators/current-user.decorator';
 import { CallParticipantService } from '../services/call-participant.service';
 
 @UseGuards(JwtAuthGuard)
-@Controller('CallParticipants')
+@Controller('call-participants')
 export class CallParticipantController {
   private logger = new Logger(CallParticipantController.name);
 

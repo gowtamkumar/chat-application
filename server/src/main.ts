@@ -1,10 +1,11 @@
+import { setupSwagger } from '@modules/api-docs.swager';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
-import getLogLevels from './Logger/logger';
 import { json } from 'express';
 import { rateLimit } from 'express-rate-limit';
+import { AppModule } from './app.module';
+import getLogLevels from './Logger/logger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap Logger');
@@ -15,7 +16,6 @@ async function bootstrap() {
 
   const API_PREFIX = 'api/v1'; // You can customize this prefix
   app.setGlobalPrefix(API_PREFIX);
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, //we can whitelist the acceptable properties, and any property not included in the whitelist is automatically stripped from the resulting object. For example, if our handler expects email and password properties, but a request also includes an age property, this property can be automatically removed from the resulting DTO
@@ -38,6 +38,15 @@ async function bootstrap() {
       message: 'Too many requests from this IP, please try again later',
     }),
   );
+  if (AppModule.documentationEnabled) {
+    // need to work on this not working setupSwagger
+    setupSwagger(app, {
+      port: AppModule.port,
+      prefix: AppModule.apiPrefix,
+      version: AppModule.apiVersion,
+    });
+  }
+
   const PORT = process.env.API_PORT || 3900;
   await app.listen(PORT, () => {
     logger.log(

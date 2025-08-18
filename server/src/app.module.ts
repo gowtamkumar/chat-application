@@ -1,22 +1,23 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from '@admin/admin.module';
-import { DatabaseModule } from './database/database.module';
-import { OtherModule } from '@modules/other/other.module';
+import { CallParticipantModule } from '@modules/call-participant/call-participant.module';
+import { CallModule } from '@modules/call/call.module';
 import { ChatModule } from '@modules/chat/chat.module';
-import { MessagesModule } from '@modules/message/message.module';
 import { ContactModule } from '@modules/contact/contact.module';
 import { ConversationParticipantModule } from '@modules/conversation-participant/conversation-participant.module';
-import { MessageReceiptsModule } from '@modules/message-receipt/message-receipt.module';
-import { CallModule } from '@modules/call/call.module';
-import { CallParticipantModule } from '@modules/call-participant/call-participant.module';
 import { MessageReactionsModule } from '@modules/message-reaction/message-reaction.module';
+import { MessageReceiptsModule } from '@modules/message-receipt/message-receipt.module';
+import { MessagesModule } from '@modules/message/message.module';
+import { OtherModule } from '@modules/other/other.module';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DatabaseModule } from './database/database.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.development.local', '.env.development', '.env'],
     }),
+
     ChatModule,
     AdminModule,
     CallModule,
@@ -32,4 +33,40 @@ import { MessageReactionsModule } from '@modules/message-reaction/message-reacti
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  static nodeEnv: string;
+  static port: number;
+  static apiVersion: string;
+  static apiPrefix: string;
+  static documentationEnabled: boolean;
+
+  constructor(private readonly configService: ConfigService) {
+    AppModule.nodeEnv = this.configService.get('NODE_ENV') as string;
+    AppModule.port = +this.configService.get('API_PORT');
+    AppModule.apiVersion = this.configService.get('API_VERSION') as string;
+    AppModule.apiPrefix = this.configService.get('API_PREFIX') as string;
+    AppModule.documentationEnabled = this.configService.get(
+      'ENABLE_DOCUMENTATION',
+    ) as boolean; // only for dev mode
+  }
+
+  configure(consumer: MiddlewareConsumer) {
+    const middlewares = [
+      // FrontendMiddleware,
+      // LoggerMiddleware,
+      // IpMiddleware,
+      // CookieParserMiddleware,
+      // RateLimitMiddleware,
+      // CorsMiddleware,
+      // CSRFMiddleware,
+      // HelmetMiddleware,
+      // UserMiddleware,
+      // LocalsMiddleware,
+      // CompressionMiddleware,
+    ];
+    consumer
+      .apply(...middlewares)
+      // .exclude('api/(.*)')
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

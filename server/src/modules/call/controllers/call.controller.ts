@@ -1,4 +1,5 @@
 import { JwtAuthGuard } from '@admin/auth/guards/jwt-auth.guard';
+import { RequestContext } from '@common/decorators/current-user.decorator';
 import { RequestContextDto } from '@common/dtos/request-context.dto';
 import {
   Body,
@@ -14,11 +15,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CreateCallsDto, FilterCallsDto, UpdateCallsDto } from '../dtos';
-import { RequestContext } from '@common/decorators/current-user.decorator';
 import { CallService } from '../services/call.service';
 
 @UseGuards(JwtAuthGuard)
-@Controller('Calls')
+@Controller('calls')
 export class CallController {
   private logger = new Logger(CallController.name);
 
