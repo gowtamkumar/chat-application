@@ -3,22 +3,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { MessagesEntity } from '@modules/message/entities/message.entity';
+import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
-  WebSocketGateway,
-  SubscribeMessage,
-  MessageBody,
-  ConnectedSocket, // ✅ you missed this
+  ConnectedSocket,
+  MessageBody, // ✅ you missed this
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MessagesEntity } from '@modules/message/entities/message.entity';
-import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -79,6 +79,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const room = `group-${data.groupId}`;
 
+    console.log('group_chat client', client);
+    console.log('group_chat data', data);
+
     const savedMessage = this.messageRepo.create({
       content: data.message,
       groupId: data.groupId,
@@ -96,28 +99,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('single_chat')
   async handleSingleChat(
-    @MessageBody() data: { receiverId: string; message: string },
+    @MessageBody() data: { senderId: string; message: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       const senderId = client.data.user.id;
 
+      console.log('client', client.data);
+      console.log('data', data);
+
       // Save message to DB
       const savedMessage = this.messageRepo.create({
         content: data.message,
         senderId,
-        receiverId: data.receiverId,
+        receiverId: data.senderId,
       });
       await this.messageRepo.save(savedMessage);
 
       // ✅ Get receiver's socket ID
-      const receiverSocketId = this.userSockets.get(data.receiverId);
+      const receiverSocketId = this.userSockets.get(data.senderId);
 
       // ✅ Send to receiver only
       if (receiverSocketId) {
         this.server.to(receiverSocketId).emit('single_chat', {
           senderId,
-          receiverId: data.receiverId,
+          receiverId: data.senderId,
           message: data.message,
           createdAt: savedMessage.createdAt,
         });
@@ -125,7 +131,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // ✅ Optional: Notify sender too (for instant UI update)
       client.emit('single_chat_sent', {
-        receiverId: data.receiverId,
+        receiverId: data.senderId,
         message: data.message,
         createdAt: savedMessage.createdAt,
       });
