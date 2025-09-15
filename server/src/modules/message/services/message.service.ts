@@ -3,13 +3,12 @@
 import { RequestContextDto } from '@common/dtos/request-context.dto';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   CreateMessagesDto,
   FilterMessagesDto,
   UpdateMessagesDto,
 } from '../dtos';
-import fs from 'fs';
-import { Repository } from 'typeorm';
 import { MessagesEntity } from '../entities/message.entity';
 
 @Injectable()
@@ -27,13 +26,33 @@ export class MessagesService {
   ): Promise<MessagesEntity[]> {
     this.logger.log(`${this.getMessagess.name} called`);
 
-    const reqQuery: any = {};
+    const { senderId, receiverId } = filterMessagesDto;
 
-    return this.MessagesRepo.find({ where: reqQuery });
+    // const reqQuery: { senderId: string; receiverId: string } = {} as {
+    //   senderId: string;
+    //   receiverId: string;
+    // };
+    // if (senderId) {
+    //   reqQuery.senderId = senderId;
+    // }
+
+    // if (receiverId) {
+    //   reqQuery.receiverId = receiverId;
+    // }
+
+    // console.log('reqQuery', reqQuery);
+
+    return this.MessagesRepo.find({
+      where: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+      order: { createdAt: 'ASC' }, // optional: order by timestamp
+    });
   }
 
   async getMessagessNested(ctx: RequestContextDto): Promise<MessagesEntity[]> {
-    this.logger.log(`${this.getMessagess.name} called`);
+    this.logger.log(`${this.getMessagessNested.name} called`);
     const start = process.hrtime();
 
     const qb = this.MessagesRepo.createQueryBuilder('Messages')
@@ -63,7 +82,7 @@ export class MessagesService {
     ctx: RequestContextDto,
     filterMessagesDto: FilterMessagesDto,
   ): Promise<MessagesEntity[]> {
-    this.logger.log(`${this.getMessagess.name} called`);
+    this.logger.log(`${this.getMessagessWithRelation.name} called`);
 
     const reqQuery: any = {};
 

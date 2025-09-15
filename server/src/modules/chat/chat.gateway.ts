@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -47,6 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.set(user.id, client.id);
       console.log(`User connected: ${user.id} (${client.id})`);
     } catch (err) {
+      console.error('Connection error:', err.message);
       client.disconnect();
     }
   }
@@ -99,18 +100,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('single_chat')
   async handleSingleChat(
-    @MessageBody() data: { senderId: string; message: string },
+    @MessageBody() data: { senderId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       const senderId = client.data.user.id;
 
-      console.log('client', client.data);
-      console.log('data', data);
-
       // Save message to DB
       const savedMessage = this.messageRepo.create({
-        content: data.message,
+        content: data.content,
         senderId,
         receiverId: data.senderId,
       });
@@ -124,15 +122,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(receiverSocketId).emit('single_chat', {
           senderId,
           receiverId: data.senderId,
-          message: data.message,
+          content: data.content,
           createdAt: savedMessage.createdAt,
         });
+      } else {
+        client.emit('user_offline', { userId: data.senderId });
       }
 
       // ✅ Optional: Notify sender too (for instant UI update)
       client.emit('single_chat_sent', {
         receiverId: data.senderId,
-        message: data.message,
+        content: data.content,
         createdAt: savedMessage.createdAt,
       });
     } catch (error) {

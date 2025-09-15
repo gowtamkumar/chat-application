@@ -1,4 +1,5 @@
 import { JwtAuthGuard } from '@admin/auth/guards/jwt-auth.guard';
+import { RequestContext } from '@common/decorators/current-user.decorator';
 import { RequestContextDto } from '@common/dtos/request-context.dto';
 import {
   Body,
@@ -18,7 +19,6 @@ import {
   FilterMessagesDto,
   UpdateMessagesDto,
 } from '../dtos';
-import { RequestContext } from '@common/decorators/current-user.decorator';
 import { MessagesService } from '../services/message.service';
 
 @UseGuards(JwtAuthGuard)
@@ -33,9 +33,7 @@ export class MessagesController {
     @RequestContext() ctx: RequestContextDto,
     @Query() filterMessagesDto: FilterMessagesDto,
   ) {
-    // this.logger.verbose(`User "${ctx.user?.username}" retieving Messagess.`);
-
-    console.log('ctx', ctx);
+    // this.logger.verbose(`User "${ctx?.user?.username}" retieving Messagess.`);
 
     const Messagess = await this.MessagesService.getMessagess(
       ctx,
