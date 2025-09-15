@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: chat_postgres_db
     restart: always
     environment:
@@ -13,7 +13,7 @@ services:
       - chat_main_network
 
   backup:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: db_backup
     entrypoint: ["sh", "-c", "/backup.sh"]
     volumes:
