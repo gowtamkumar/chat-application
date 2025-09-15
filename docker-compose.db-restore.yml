@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_db
+    container_name: chat_postgres_db
     restart: always
     environment:
-      POSTGRES_USER: semicolonitinventery
-      POSTGRES_PASSWORD: semicolonit@
-      POSTGRES_DB: inventory_sas
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password@
+      POSTGRES_DB: real_time_comunication
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -17,9 +17,9 @@ services:
     volumes:
       - ./backups:/backups # Mount backup directory
       - ./scripts/restore.sh:/restore.sh # Mount restore script
-    entrypoint: [ "sh", "/restore.sh" ] # Execute the restore script
+    entrypoint: ["sh", "/restore.sh"] # Execute the restore script
     environment:
-      PGPASSWORD: semicolonit@ # PostgreSQL password
+      PGPASSWORD: password@ # PostgreSQL password
     depends_on:
       - postgres
     networks:

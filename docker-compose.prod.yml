@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_db
+    container_name: chat_postgres_db
     restart: always
     environment:
-      POSTGRES_USER: semicolonitinventery
-      POSTGRES_PASSWORD: semicolonit@
-      POSTGRES_DB: inventory_sas
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password@
+      POSTGRES_DB: real_time_comunication
       TZ: "GMT"
       PGTZ: "GMT"
     volumes:
@@ -19,8 +19,8 @@ services:
     image: dpage/pgadmin4:latest
     restart: always
     environment:
-      - PGADMIN_DEFAULT_EMAIL=gowtam.semicolonit@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=semicolonit@
+      - PGADMIN_DEFAULT_EMAIL=gowtampaul0@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=password@
     ports:
       - "5050:80"
     depends_on:
