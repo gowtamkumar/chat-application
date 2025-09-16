@@ -1,5 +1,4 @@
 import GroupChatPage from '@/components/GroupChatPage'
-import React from 'react'
 
 export default function page() {
   return (

@@ -1,11 +1,6 @@
 import { AdminModule } from '@admin/admin.module';
-import { CallParticipantModule } from '@modules/call-participant/call-participant.module';
-import { CallModule } from '@modules/call/call.module';
 import { ChatModule } from '@modules/chat/chat.module';
 import { ContactModule } from '@modules/contact/contact.module';
-import { ConversationParticipantModule } from '@modules/conversation-participant/conversation-participant.module';
-import { MessageReactionsModule } from '@modules/message-reaction/message-reaction.module';
-import { MessageReceiptsModule } from '@modules/message-receipt/message-receipt.module';
 import { MessagesModule } from '@modules/message/message.module';
 import { OtherModule } from '@modules/other/other.module';
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
@@ -20,15 +15,10 @@ import { DatabaseModule } from './database/database.module';
 
     ChatModule,
     AdminModule,
-    CallModule,
-    CallParticipantModule,
-    MessageReactionsModule,
     DatabaseModule,
     OtherModule,
     MessagesModule,
-    MessageReceiptsModule,
     ContactModule,
-    ConversationParticipantModule,
   ],
   controllers: [],
   providers: [],

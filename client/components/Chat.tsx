@@ -59,7 +59,7 @@ export default function HomePage() {
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState<"all" | "group">("all");
+  const [activeTab, setActiveTab] = useState<"single" | "group">("single");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -78,13 +78,13 @@ export default function HomePage() {
   };
 
   // Filter chats based on active tab and search query
-  const filteredChats = (users || []).filter((chat: any) => {
-    const matchesTab = activeTab === "all" ? true : chat.type === "group";
-    const matchesSearch = chat.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  // const filteredChats = (users || []).filter((chat: any) => {
+  //   const matchesTab = activeTab === "single" ? true : chat.type === "group";
+  //   const matchesSearch = chat.name
+  //     .toLowerCase()
+  //     .includes(search.toLowerCase());
+  //   return matchesTab && matchesSearch;
+  // });
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-indigo-50 to-white shadow-lg">
@@ -154,14 +154,14 @@ export default function HomePage() {
       {/* Tabs */}
       <nav className="flex bg-white border-b shadow-sm">
         <button
-          onClick={() => setActiveTab("all")}
+          onClick={() => setActiveTab("single")}
           className={`flex-1 py-3 text-center font-semibold transition
-            ${activeTab === "all"
+            ${activeTab === "single"
               ? "border-b-4 border-indigo-600 text-indigo-700"
               : "text-gray-500 hover:text-indigo-600"
             }`}
         >
-          All
+          Single Chat
         </button>
         <button
           onClick={() => setActiveTab("group")}
@@ -188,64 +188,68 @@ export default function HomePage() {
 
       {/* Chat List */}
       <main className="flex-1 overflow-y-auto bg-white">
-        {filteredChats.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400 font-medium">
-            No chats found.
-          </div>
-        ) : (
-          filteredChats.map((chat: any) => {
-            return (
-              <div
-                key={chat.id}
-                onClick={() => {
-                  const link =
-                    chat.type === "group"
-                      ? `/group/${chat.id}`
-                      : `/chat/${chat.id}`;
-                  route.push(link);
-                }}
-                className={`flex items-center px-6 py-4 border-b cursor-pointer transition
+        {activeTab === "single" ? (
+          users.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-gray-400 font-medium">
+              No chats found.
+            </div>
+          ) : (
+            users.map((chat: any) => {
+              return (
+                <div
+                  key={chat.id}
+                  onClick={() => {
+                    const link = `/chat/${chat.id}`;
+                    route.push(link);
+                  }}
+                  className={`flex items-center px-6 py-4 border-b cursor-pointer transition
               ${selectedChatId === chat.id
-                    ? "bg-indigo-50 border-indigo-300"
-                    : "hover:bg-indigo-100"
-                  }`}
-              >
-                {/* Avatar with online badge */}
-                <div className="relative">
-                  <img
-                    src={chat.avatar}
-                    alt={chat.name}
-                    className="w-14 h-14 rounded-full object-cover"
-                  />
-                  {chat.isOnline && (
-                    <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                      ? "bg-indigo-50 border-indigo-300"
+                      : "hover:bg-indigo-100"
+                    }`}
+                >
+                  {/* Avatar with online badge */}
+                  <div className="relative">
+                    <img
+                      src={chat.avatar}
+                      alt={chat.name}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+                    {chat.isOnline && (
+                      <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                    )}
+                  </div>
+
+                  {/* Chat info */}
+                  <div className="flex-1 ml-5 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <h2 className="font-semibold text-lg text-indigo-900 truncate">
+                        {chat.name}
+                      </h2>
+                      <span className="text-xs text-indigo-500 font-semibold whitespace-nowrap">
+                        {chat.lastTime}
+                      </span>
+                    </div>
+                    <p className="text-sm text-indigo-700 truncate mt-1">
+                      {chat.lastMessage}
+                    </p>
+                  </div>
+
+                  {/* Unread count badge */}
+                  {chat.unreadCount > 0 && (
+                    <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
+                      {chat.unreadCount}
+                    </div>
                   )}
                 </div>
-
-                {/* Chat info */}
-                <div className="flex-1 ml-5 overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-lg text-indigo-900 truncate">
-                      {chat.name}
-                    </h2>
-                    <span className="text-xs text-indigo-500 font-semibold whitespace-nowrap">
-                      {chat.lastTime}
-                    </span>
-                  </div>
-                  <p className="text-sm text-indigo-700 truncate mt-1">
-                    {chat.lastMessage}
-                  </p>
-                </div>
-
-                {/* Unread count badge */}
-                {chat.unreadCount > 0 && (
-                  <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
-                    {chat.unreadCount}
-                  </div>
-                )}
-              </div>
-            );
-          })
+              );
+            })
+          )
+        ) : (
+          <div className="flex justify-between px-2">
+            <h1>Hello group</h1>
+            <p>create Group</p>
+          </div>
         )}
       </main>
     </div>
