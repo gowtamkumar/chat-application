@@ -10,7 +10,7 @@ services:
       TZ: "GMT"
       PGTZ: "GMT"
     ports:
-      - "5544:5432" # external:internal
+      - "5555:5432" # external:internal
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

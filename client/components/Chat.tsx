@@ -1,9 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { getUsers } from "@/utils/api/user";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,53 +13,10 @@ export default function HomePage() {
   const session: any = useSession();
   const currentUser = session.data?.user.user;
 
-  // const chats = [
-  //   {
-  //     id: 1,
-  //     name: "John Doe",
-  //     avatar: "/user-avatar.png",
-  //     lastMessage: "Hey, how are you doing today?",
-  //     lastTime: "10:45 AM",
-  //     unreadCount: 2,
-  //     isOnline: true,
-  //     type: "personal",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Jane Smith",
-  //     avatar: "/bot-avatar.png",
-  //     lastMessage: "Let’s meet tomorrow at 5.",
-  //     lastTime: "9:30 AM",
-  //     unreadCount: 0,
-  //     isOnline: false,
-  //     type: "personal",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Family Group",
-  //     avatar: "/group-avatar.png",
-  //     lastMessage: "Anna: I will be late.",
-  //     lastTime: "Yesterday",
-  //     unreadCount: 5,
-  //     isOnline: true,
-  //     type: "group",
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Work Buddies",
-  //     avatar: "/group-avatar.png",
-  //     lastMessage: "Don’t forget the meeting at 3pm.",
-  //     lastTime: "Mon",
-  //     unreadCount: 0,
-  //     isOnline: false,
-  //     type: "group",
-  //   },
-  // ];
-
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState<"single" | "group">("single");
+  // const [activeTab, setActiveTab] = useState<"single" | "group">("single");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -67,15 +24,17 @@ export default function HomePage() {
   }, []);
 
   const fetchData = async () => {
-    const getData = await fetch("http://localhost:3900/api/v1/users", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.data?.user?.accessToken}`,
-      },
-    });
-    const newusers = await getData.json();
-    setUsers(newusers.data);
+    const users = await getUsers();
+    setUsers(users.data || []);
   };
+
+  // Filter chats based on active tab and search query
+  const filteredChats = (users || []).filter((chat: any) => {
+    const matchesSearch = chat.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    return matchesSearch;
+  });
 
   // Filter chats based on active tab and search query
   // const filteredChats = (users || []).filter((chat: any) => {
@@ -152,7 +111,7 @@ export default function HomePage() {
       </header>
 
       {/* Tabs */}
-      <nav className="flex bg-white border-b shadow-sm">
+      {/* <nav className="flex bg-white border-b shadow-sm">
         <button
           onClick={() => setActiveTab("single")}
           className={`flex-1 py-3 text-center font-semibold transition
@@ -173,7 +132,7 @@ export default function HomePage() {
         >
           Groups
         </button>
-      </nav>
+      </nav> */}
 
       {/* Search Bar */}
       <div className="p-4 bg-white border-b shadow-sm">
@@ -188,7 +147,58 @@ export default function HomePage() {
 
       {/* Chat List */}
       <main className="flex-1 overflow-y-auto bg-white">
-        {activeTab === "single" ? (
+        {filteredChats.map((chat: any) => {
+          return (
+            <div
+              key={chat.id}
+              onClick={() => {
+                const link = `/chat/${chat.id}`;
+                route.push(link);
+              }}
+              className={`flex items-center px-6 py-4 border-b cursor-pointer transition
+              ${selectedChatId === chat.id
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "hover:bg-indigo-100"
+                }`}
+            >
+              {/* Avatar with online badge */}
+              <div className="relative">
+                <img
+                  src={chat.avatar}
+                  alt={chat.name}
+                  className="w-14 h-14 rounded-full object-cover"
+                />
+                {chat.isOnline && (
+                  <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                )}
+              </div>
+
+              {/* Chat info */}
+              <div className="flex-1 ml-5 overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <h2 className="font-semibold text-lg text-indigo-900 truncate">
+                    {chat.name}
+                  </h2>
+                  <span className="text-xs text-indigo-500 font-semibold whitespace-nowrap">
+                    {chat.lastTime}
+                  </span>
+                </div>
+                <p className="text-sm text-indigo-700 truncate mt-1">
+                  {chat.lastMessage}
+                </p>
+              </div>
+
+              {/* Unread count badge */}
+              {chat.unreadCount > 0 && (
+                <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
+                  {chat.unreadCount}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* {activeTab === "single" ? (
           users.length === 0 ? (
             <div className="flex items-center justify-center h-full text-gray-400 font-medium">
               No chats found.
@@ -208,7 +218,6 @@ export default function HomePage() {
                       : "hover:bg-indigo-100"
                     }`}
                 >
-                  {/* Avatar with online badge */}
                   <div className="relative">
                     <img
                       src={chat.avatar}
@@ -220,7 +229,6 @@ export default function HomePage() {
                     )}
                   </div>
 
-                  {/* Chat info */}
                   <div className="flex-1 ml-5 overflow-hidden">
                     <div className="flex justify-between items-center">
                       <h2 className="font-semibold text-lg text-indigo-900 truncate">
@@ -235,7 +243,6 @@ export default function HomePage() {
                     </p>
                   </div>
 
-                  {/* Unread count badge */}
                   {chat.unreadCount > 0 && (
                     <div className="ml-4 bg-indigo-600 text-white text-xs font-semibold rounded-full px-3 py-1 shadow-md">
                       {chat.unreadCount}
@@ -250,7 +257,7 @@ export default function HomePage() {
             <h1>Hello group</h1>
             <p>create Group</p>
           </div>
-        )}
+        )} */}
       </main>
     </div>
   );

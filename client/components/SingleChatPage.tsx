@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { getMessages } from "@/utils/api/message";
+import { getUser } from "@/utils/api/user";
 import { createSocket } from "@/utils/socket";
 import EmojiPicker from "emoji-picker-react";
 import { useSession } from "next-auth/react";
@@ -9,71 +11,48 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 import Notification from "./Notification";
 
-// type User = {
-//   id: number | string;
-//   name: string;
-//   avatar: string;
-// };
-
-// type Message = {
-//   id: number | string;
-//   userId: number | string;
-//   content?: string;
-//   audioUrl?: string;
-//   imageUrl?: string;
-// };
-
 export default function SingleChatPage() {
   const session: any = useSession();
   const usePrams = useParams();
-  const [users, setUsers] = useState<any[]>([]);
+  const [user, setUser] = useState({} as any);
   const [messages, setMessages] = useState<any[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
-
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const currentUserId = session.data?.user?.user?.id;
 
-  const chatPartner = users.find((u) => u.id === usePrams.id);
-
-  // ✅ useCallback to memoize fetch function
-  const fetchData = useCallback(async () => {
+  const getSingleUser = useCallback(async (id: number | string) => {
     try {
-      const res = await fetch("http://localhost:3900/api/v1/users", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.data?.user?.accessToken}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch users");
-
-      const data = await res.json();
-      setUsers(data.data);
+      const user = await getUser(id);
+      setUser(user.data);
     } catch (err) {
       console.error("Error fetching users:", err);
     }
-  }, [session?.data?.user?.accessToken]);
+  }, []);
 
   // ✅ Fetch users once when accessToken is available
   useEffect(() => {
     if (session?.data?.user?.accessToken) {
-      fetchData();
+      getSingleUser(usePrams.id as string);
     }
-  }, [fetchData]);
+  }, [getSingleUser, session?.data?.user?.accessToken, usePrams.id]);
 
   // ✅ Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [users]); // or [messages] if this is chat
+  }, [user]); // or [messages] if this is chat
+
+  const getMessage = useCallback(async () => {
+    const message = await getMessages({ currentUserId, usePrams });
+    setMessages(message.data || []);
+  }, [currentUserId, usePrams]);
 
   useEffect(() => {
     if (session.status === "authenticated") {
       getMessage();
+
       const newSocket = createSocket(session.data.user.accessToken);
       setSocket(newSocket);
 
@@ -84,8 +63,7 @@ export default function SingleChatPage() {
         setMessages((prev) => [...prev, msg]);
       });
 
-      newSocket.on("user_offline", (data) => {
-        const user = users.find((u) => u.id === data.userId);
+      newSocket.on("user_offline", () => {
         setNotification(
           `${user?.name || "User"
           } is offline. Message will be sent when they are back online.`
@@ -96,21 +74,7 @@ export default function SingleChatPage() {
         newSocket.disconnect();
       };
     }
-  }, []);
-
-  const getMessage = async () => {
-    const getData = await fetch(
-      `http://localhost:3900/api/v1/messagess?senderId=${currentUserId}&receiverId=${usePrams.id}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.data?.user?.accessToken}`,
-        },
-      }
-    );
-    const message = await getData.json();
-    setMessages(message.data);
-  };
+  }, [getMessage, session.data.user.accessToken, session.status, user?.name]);
 
   const sendMessage = async () => {
     if (inputText.trim() && socket) {
@@ -130,8 +94,6 @@ export default function SingleChatPage() {
     setInputText((prev) => prev + emojiData.emoji);
   };
 
-  const getUser = (id: number | string) => users.find((u) => u.id === id);
-
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {notification && (
@@ -143,13 +105,13 @@ export default function SingleChatPage() {
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
         <div className="flex items-center space-x-4">
           <img
-            src={chatPartner?.image}
-            alt={chatPartner?.name}
+            src={user?.image}
+            alt={user?.name}
             className="w-12 h-12 rounded-full border-2 border-blue-500"
           />
           <div>
             <div className="font-semibold text-lg text-gray-700">
-              {chatPartner?.name}
+              {user?.name}
             </div>
             <div className="text-sm text-gray-400">Online</div>
           </div>
@@ -158,15 +120,7 @@ export default function SingleChatPage() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {(messages || []).map((msg, idx: number) => {
-          const user = getUser(msg?.senderId);
-
           const isCurrentUser = msg.senderId === currentUserId;
-
-          console.log("currentUserId", currentUserId);
-          console.log("msg.senderId", msg.senderId);
-          // console.log("user", user);
-          console.log("msg", isCurrentUser);
-
           return (
             <div
               key={idx}
@@ -226,6 +180,15 @@ export default function SingleChatPage() {
           </div>
         )}
         <div className="flex items-center space-x-2 p-2 rounded-xl border-2 border-transparent transition focus-within:border-blue-400 focus-within:bg-blue-50">
+          <button
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="text-blue-500 hover:text-blue-600"
+            type="button"
+            aria-label="Toggle emoji picker"
+          >
+            😊
+          </button>
+
           <button
             onClick={() => setShowEmojiPicker((prev) => !prev)}
             className="text-blue-500 hover:text-blue-600"

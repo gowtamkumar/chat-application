@@ -6,17 +6,17 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { JwtService, JwtSignOptions, JwtVerifyOptions } from '@nestjs/jwt';
+import { Response as ExpressResponse, Request } from 'express';
+import { EmailService } from '../../../other/email/services/email.service';
+import { UpdatePasswordDto, UpdateUserDto } from '../../user/dtos';
 import { CreateUserDto } from '../../user/dtos/create-user.dto';
+import { ForgotPasswordDto } from '../../user/dtos/forgot-password.dto';
+import { ResetPasswordDto } from '../../user/dtos/reset-password.dto';
 import { UserDto } from '../../user/dtos/user.dto';
 import { UserService } from '../../user/services/user.service';
 import { LoginCredentialDto, RegisterCredentialDto } from '../dtos';
-import { ConfigService } from '@nestjs/config';
-import { Response as ExpressResponse, Request } from 'express';
-import { UpdatePasswordDto, UpdateUserDto } from '../../user/dtos';
-import { ForgotPasswordDto } from '../../user/dtos/forgot-password.dto';
-import { EmailService } from '../../../other/email/services/email.service';
-import { ResetPasswordDto } from '../../user/dtos/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -203,7 +203,7 @@ export class AuthService {
       throw new Error('RESET_SECRET is not defined in environment variables');
     }
 
-    const jwtSignOptions: JwtSignOptions = {
+    const jwtSignOptions: JwtVerifyOptions = {
       secret, // Securely fetch secret
     };
 

@@ -1,17 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use server'
+"use server";
 import { auth } from "@/auth";
 
- export const fetchData = async () => {
-  const session: any = await auth()
-  console.log("session.data?.user?.accessToken", session.data?.user?.accessToken);
-  
-    const getData = await fetch("http://server:3900/api/v1/users", {
+export const getUsers = async () => {
+  const session: any = await auth();
+  const getData = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.user?.accessToken}`,
+    },
+  });
+  const newusers = await getData.json();
+  return newusers;
+};
+
+export const getUser = async (id: string | number) => {
+  const session: any = await auth();
+  const getData = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${id}`,
+    {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.data?.user?.accessToken}`,
+        Authorization: `Bearer ${session.user?.accessToken}`,
       },
-    });
-    const newusers = await getData.json();
-    return newusers
-  };
+    }
+  );
+  const newusers = await getData.json();
+  return newusers;
+};

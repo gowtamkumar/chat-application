@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
-
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -60,43 +58,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`User disconnected: ${userId}`);
   }
 
-  // ✅ Join group
-  @SubscribeMessage('join_group')
-  handleJoinGroup(
-    @MessageBody() data: { groupId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const room = `group-${data.groupId}`;
-    client.join(room);
-    client.emit('joined_group', { groupId: data.groupId });
-    console.log(`User ${client.data.user.id} joined ${room}`);
-  }
+  // // ✅ Join group
+  // @SubscribeMessage('join_group')
+  // handleJoinGroup(
+  //   @MessageBody() data: { groupId: string },
+  //   @ConnectedSocket() client: Socket,
+  // ) {
+  //   const room = `group-${data.groupId}`;
+  //   client.join(room);
+  //   client.emit('joined_group', { groupId: data.groupId });
+  //   console.log(`User ${client.data.user.id} joined ${room}`);
+  // }
 
-  // ✅ Group chat
-  @SubscribeMessage('group_chat')
-  async handleGroupChat(
-    @MessageBody() data: { groupId: string; message: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const room = `group-${data.groupId}`;
+  // // ✅ Group chat
+  // @SubscribeMessage('group_chat')
+  // async handleGroupChat(
+  //   @MessageBody() data: { groupId: string; message: string },
+  //   @ConnectedSocket() client: Socket,
+  // ) {
+  //   const room = `group-${data.groupId}`;
 
-    console.log('group_chat client', client);
-    console.log('group_chat data', data);
+  //   console.log('group_chat client', client);
+  //   console.log('group_chat data', data);
 
-    const savedMessage = this.messageRepo.create({
-      content: data.message,
-      groupId: data.groupId,
-      senderId: client.data.user.id,
-    });
-    await this.messageRepo.save(savedMessage);
+  //   const savedMessage = this.messageRepo.create({
+  //     content: data.message,
+  //     groupId: data.groupId,
+  //     senderId: client.data.user.id,
+  //   });
+  //   await this.messageRepo.save(savedMessage);
 
-    this.server.to(room).emit('group_chat', {
-      groupId: data.groupId,
-      message: data.message,
-      senderId: client.data.user.id,
-      createdAt: savedMessage.createdAt,
-    });
-  }
+  //   this.server.to(room).emit('group_chat', {
+  //     groupId: data.groupId,
+  //     message: data.message,
+  //     senderId: client.data.user.id,
+  //     createdAt: savedMessage.createdAt,
+  //   });
+  // }
 
   @SubscribeMessage('single_chat')
   async handleSingleChat(

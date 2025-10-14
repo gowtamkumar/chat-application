@@ -20,7 +20,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           }
         );
         const user = await res.json();
-        console.log("user", user);
 
         try {
           if (res.ok && user.data) {
