@@ -98,7 +98,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('single_chat')
   async handleSingleChat(
-    @MessageBody() data: { senderId: string; content: string },
+    @MessageBody()
+    data: { senderId: string; content: string; file: string; filetype: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
@@ -108,6 +109,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const savedMessage = this.messageRepo.create({
         content: data.content,
         senderId,
+        file: data.file,
+        filetype: data.filetype,
         receiverId: data.senderId,
       });
       await this.messageRepo.save(savedMessage);
@@ -121,6 +124,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           senderId,
           receiverId: data.senderId,
           content: data.content,
+          file: data.file,
+          filetype: data.filetype,
           createdAt: savedMessage.createdAt,
         });
       } else {
@@ -131,6 +136,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('single_chat_sent', {
         receiverId: data.senderId,
         content: data.content,
+        file: data.file,
+        filetype: data.filetype,
         createdAt: savedMessage.createdAt,
       });
     } catch (error) {

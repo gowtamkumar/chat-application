@@ -11,7 +11,7 @@ export const getMessages = async ({
 }) => {
   const session: any = await auth();
   const getData = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/messagess?senderId=${currentUserId}&receiverId=${usePrams.id}`,
+    `${process.env.NEXT_PUBLIC_API_URL_DOCKER}/messagess?senderId=${currentUserId}&receiverId=${usePrams.id}`,
     {
       headers: {
         "Content-Type": "application/json",

@@ -1,18 +1,33 @@
 import { setupSwagger } from '@modules/api-docs.swager';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import {
+  ExpressAdapter,
+  NestExpressApplication,
+} from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
 import { json } from 'express';
 import { rateLimit } from 'express-rate-limit';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import getLogLevels from './Logger/logger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap Logger');
 
-  const app = await NestFactory.create(AppModule, {
-    logger: getLogLevels(process.env.NODE_ENV === 'production'),
-  });
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Running in production mode');
+  }
+
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+    new ExpressAdapter(),
+    {
+      logger: getLogLevels(process.env.NODE_ENV === 'production'),
+    },
+  );
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const API_PREFIX = 'api/v1'; // You can customize this prefix
   app.setGlobalPrefix(API_PREFIX);

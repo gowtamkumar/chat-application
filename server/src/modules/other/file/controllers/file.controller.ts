@@ -1,3 +1,4 @@
+import { RequestContext } from '@common/decorators/current-user.decorator';
 import {
   Body,
   Controller,
@@ -16,16 +17,15 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesService } from '../services/file.service';
-import { UserDto } from '../../../admin/user/dtos';
-import { JwtAuthGuard } from '../../../admin/auth/guards/jwt-auth.guard';
 import {
   FileFieldsInterceptor,
   FileInterceptor,
 } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { JwtAuthGuard } from '../../../admin/auth/guards/jwt-auth.guard';
+import { UserDto } from '../../../admin/user/dtos';
 import { FilterFileDto } from '../dtos';
-import { RequestContext } from '@common/decorators/current-user.decorator';
+import { FilesService } from '../services/file.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('files')
@@ -90,8 +90,6 @@ export class FileController {
         destination: 'public/uploads',
         filename: (req, file, cb) => {
           const fileNameSplit = file.originalname.split('.');
-          console.log('fileNameSplit', fileNameSplit);
-
           const fileExt = fileNameSplit[fileNameSplit.length - 1];
           const justFileName = fileNameSplit[0];
           cb(null, `${Date.now()}_${justFileName}.${fileExt}`);
@@ -101,14 +99,7 @@ export class FileController {
   )
   @Post('/upload')
   async uploadFile(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 4 }),
-        ],
-      }),
-    )
+    @UploadedFile()
     file: Express.Multer.File,
   ) {
     const newFile = await this.filesService.createFile(file);

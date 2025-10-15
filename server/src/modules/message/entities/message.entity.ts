@@ -14,14 +14,20 @@ export class MessagesEntity {
   @Column({ name: 'group_id', type: 'uuid', nullable: true })
   groupId: string;
 
-  @Column({ name: 'sender_id', type: 'uuid', nullable: true })
+  @Column({ name: 'sender_id', type: 'uuid' })
   senderId: string;
 
-  @Column({ name: 'receiver_id', type: 'uuid', nullable: true })
+  @Column({ name: 'receiver_id', type: 'uuid' })
   receiverId: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   content: string;
+
+  @Column({ nullable: true })
+  file: string;
+
+  @Column({ nullable: true })
+  filetype: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp with time zone' })
   createdAt: string;

@@ -33,7 +33,7 @@ export class UpdateUserDto {
 
   @IsString()
   @IsOptional()
-  image: string;
+  file: string;
 
   @IsString()
   @IsOptional()

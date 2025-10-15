@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { StatusEnum, GenderEnum, UserTypeEnum } from '../enums';
+import { GenderEnum, StatusEnum, UserTypeEnum } from '../enums';
 
 export class UserDto {
   @Expose()
@@ -30,13 +30,10 @@ export class UserDto {
   gender: GenderEnum;
 
   @Expose()
-  point: string;
-
-  @Expose()
   address: string;
 
   @Expose()
-  image: string;
+  file: string;
 
   @Expose()
   lastLogin: string;

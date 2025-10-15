@@ -1,61 +1,103 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @next/next/no-img-element */
+
 "use client";
 
+import { userUpdate } from "@/utils/api/user";
+import { Button } from "antd";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import FileUpload from "./FileUpload";
+import FileViewer from "./FileViewer";
+import Header from "./Header";
 
 export default function Profile() {
-  const [name, setName] = useState("Alice Johnson");
-  const [email, setEmail] = useState("alice.johnson@example.com");
+  const [file, setFile] = useState({} as any);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const session: any = useSession();
   const profile = session?.data?.user?.user;
 
   useEffect(() => {
     setEmail(profile.email);
     setName(profile.name);
+    setFile({ filename: profile.file });
   }, []);
 
-  const handleSave = () => {
-    alert(`Saved:\nName: ${name}\nEmail: ${email}`);
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Validate input before sending
+      if (!name.trim() || !email.trim()) {
+        alert("Name and email are required.");
+        return;
+      }
 
-    const fetchData = async () => {
-      const userData = {
-        name,
-        email,
-      };
-      const getData = await fetch(
-        `http://localhost:3900/api/v1/users/${profile.id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(userData),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.data?.user?.accessToken}`,
-          },
-        }
-      );
-      const newusers = await getData.json();
-      // console.log("newusers", newusers);
+      if (!file?.filename) {
+        alert("Please upload a file before saving.");
+        return;
+      }
 
-      setEmail(newusers.data.email);
-      setName(newusers.data.name);
-    };
+      const userData = { name, email, file: file.filename };
 
-    fetchData();
-    setEditing(false);
+      const response = await userUpdate(userData);
+
+      // Handle API response
+      if (response?.success) {
+        const user = response.data;
+
+        setName(user.name);
+        setEmail(user.email);
+        setFile({ filename: user.file });
+        setEditing(false);
+        setLoading(false);
+        alert("Profile updated successfully!");
+      } else {
+        throw new Error(response?.message || "Failed to update user.");
+      }
+    } catch (error: any) {
+      console.error("🚨 Error updating user:", error);
+
+      // Handle both API and unexpected errors
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong while updating your profile.";
+
+      alert(errorMessage);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg mt-8">
+    // <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg mt-8">
+    <div>
       {/* Header */}
+      <Header />
       <div className="flex flex-col items-center space-y-4">
-        <img
-          src="/user-avatar.png"
-          alt="User Avatar"
-          className="w-28 h-28 rounded-full border-4 border-indigo-500 shadow-md object-cover"
+        <FileViewer
+          file={{
+            pdf: {
+              width: "40%",
+              height: "10vh",
+            },
+            mp4: {
+              width: "40%",
+              height: "10vh",
+            },
+            imgStyle: {
+              width: 100,
+              height: 100,
+              className:
+                "w-28 h-28 rounded-full border-4 border-indigo-500 shadow-md object-cover",
+            },
+            fileData: {
+              filename: file.filename,
+              filetype: file.mimetype,
+            },
+          }}
         />
+
         {!editing ? (
           <>
             <h1 className="text-3xl font-extrabold text-indigo-700">
@@ -102,20 +144,29 @@ export default function Profile() {
                 className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+            <FileUpload
+              setFile={setFile}
+              fieldname="file"
+              listType="picture-card"
+            />
 
             <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setEditing(false)}
+              <Button
+                onClick={() => {
+                  setEditing(false);
+                  setLoading(false);
+                }}
                 className="px-4 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSave}
+                loading={loading}
                 className="px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
               >
                 Save
-              </button>
+              </Button>
             </div>
           </div>
         )}

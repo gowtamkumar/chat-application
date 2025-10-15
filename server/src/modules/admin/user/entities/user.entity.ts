@@ -1,11 +1,11 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
   AfterInsert,
-  AfterUpdate,
   AfterRemove,
+  AfterUpdate,
+  Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { GenderEnum, StatusEnum, UserTypeEnum } from '../enums';
@@ -40,13 +40,10 @@ export class UserEntity {
   gender: GenderEnum;
 
   @Column({ nullable: true })
-  point: string;
-
-  @Column({ nullable: true })
   address: string;
 
   @Column({ nullable: true })
-  image: string;
+  file: string;
 
   // @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.User })
   // roles: RoleEnum[];

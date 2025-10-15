@@ -1,22 +1,22 @@
+import { RequestContextDto } from '@common/dtos/request-context.dto';
 import {
   Injectable,
   Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
 import {
   CreateUserDto,
   FilterUserDto,
   UpdatePasswordDto,
   UpdateUserDto,
 } from '../dtos';
-import { UserEntity } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ForgotPasswordDto } from '../dtos/forgot-password.dto';
 import { ResetPasswordDto } from '../dtos/reset-password.dto';
-import { RequestContextDto } from '@common/dtos/request-context.dto';
+import { UserEntity } from '../entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -97,6 +97,9 @@ export class UserService {
     updateUserDto: UpdateUserDto,
   ): Promise<UserEntity> {
     this.logger.log(`${this.updateUser.name} Service Called`);
+
+    console.log('updateUserDto', updateUserDto);
+    console.log('id', id);
 
     const user = await this.userRepo.findOne({ where: { id } });
 
