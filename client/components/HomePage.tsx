@@ -1,10 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  const router = useRouter();
+  // const router = useRouter();
+
+  const session = useSession()
+  if (session?.status === "authenticated") {
+    redirect("/chat");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center px-4">
@@ -18,19 +24,19 @@ export default function HomePage() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={() => router.push("/login")}
+            onClick={() => redirect("/login")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg font-semibold transition"
           >
             Login
           </button>
           <button
-            onClick={() => router.push("/signup")}
+            onClick={() => redirect("/signup")}
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full text-lg font-semibold transition"
           >
             Sign Up
           </button>
           <button
-            onClick={() => router.push("/chat")}
+            onClick={() => redirect("/chat")}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full text-lg font-semibold transition"
           >
             Join Chat

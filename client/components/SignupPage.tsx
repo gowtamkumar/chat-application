@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Input } from "antd";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -65,7 +66,8 @@ export default function SignupPage() {
             >
               Name
             </label>
-            <input
+            <Input
+              size="large"
               id="name"
               type="text"
               placeholder="Enter your name"
@@ -81,7 +83,8 @@ export default function SignupPage() {
             >
               Username
             </label>
-            <input
+            <Input
+              size="large"
               id="username"
               type="text"
               placeholder="Enter your name"
@@ -98,7 +101,8 @@ export default function SignupPage() {
             >
               E-mail
             </label>
-            <input
+            <Input
+              size="large"
               id="email"
               type="text"
               placeholder="Enter your name"
@@ -115,7 +119,8 @@ export default function SignupPage() {
             >
               Password
             </label>
-            <input
+            <Input
+              size="large"
               id="password"
               type="password"
               placeholder="••••••••"
@@ -132,7 +137,8 @@ export default function SignupPage() {
             >
               Confirm Password
             </label>
-            <input
+            <Input
+              size="large"
               id="confirm"
               type="password"
               placeholder="••••••••"

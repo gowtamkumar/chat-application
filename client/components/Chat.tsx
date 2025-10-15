@@ -6,6 +6,7 @@
 import Header from "@/components/Header";
 import SingleChatPage from "@/components/SingleChatPage";
 import { getUsers } from "@/utils/api/user";
+import { Input } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,8 +40,9 @@ export default function Chat() {
       <main className="grid grid-cols-4 overflow-y-auto bg-white">
         <div>
           <div className="p-4 bg-white">
-            <input
+            <Input
               type="search"
+              size="large"
               placeholder="Search chats..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -62,7 +64,7 @@ export default function Chat() {
                 {/* Avatar with online badge */}
                 <div className="relative">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${chat.file}`}
+                    src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${chat.file || 'user.png'}`}
                     width={100}
                     height={100}
                     alt={chat?.name}
@@ -106,10 +108,10 @@ export default function Chat() {
             // <div>{selectedChatId.name}</div>
             <SingleChatPage usePrams={selectedChatId} />
           ) : (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#f0f2f5] text-gray-800">
+            <div className="flex flex-col items-center justify-center h-[90vh] bg-[#f0f2f5] text-gray-800">
               {/* Illustration */}
               <div className="flex items-center justify-center">
-                <div className="relative w-64 h-64">
+                <div className="relative w-40 h-40">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 300 200"
@@ -165,13 +167,10 @@ export default function Chat() {
 
               <p className="text-gray-600 text-center mt-2 max-w-md leading-relaxed">
                 Send and receive messages without keeping your phone online.
-                <br />
-                Use Chat hub on up to 4 linked devices and 1 phone at the same
-                time.
               </p>
 
               {/* Footer */}
-              <div className="mt-10 flex items-center space-x-2 text-gray-500 text-sm">
+              <div className="mt-5 flex items-center space-x-2 text-gray-500 text-sm">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="w-4 h-4"
@@ -191,7 +190,7 @@ export default function Chat() {
                     d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12s4.03-9 9-9 9 4.03 9 9z"
                   />
                 </svg>
-                <span>Your personal messages are end-to-end encrypted</span>
+                {/* <span>Your personal messages are end-to-end encrypted</span> */}
               </div>
             </div>
           )}

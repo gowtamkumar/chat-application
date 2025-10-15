@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Button, Input } from "antd";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,8 +25,6 @@ export default function LoginPage() {
       password,
       redirect: false,
     });
-
-    console.log("result", result);
 
     if (!result.ok) {
       alert(`${result.error}`);
@@ -106,9 +106,10 @@ export default function LoginPage() {
             >
               Username
             </label>
-            <input
+            <Input
               id="username"
               type="text"
+              size="large"
               placeholder="Enter your name"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={username}
@@ -123,28 +124,30 @@ export default function LoginPage() {
             >
               Password
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               placeholder="••••••••"
+              size="large"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+          <Button
+            htmlType="submit"
+            type="primary"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-semibold cursor-pointer"
           >
             Login
-          </button>
+          </Button>
         </form>
         <p className="mt-4 text-sm text-center text-gray-500">
           Already have an account?{" "}
-          <a href="/signup" className="text-blue-600 hover:underline">
+          <Link href="/signup" className="text-blue-600 hover:underline">
             Signup
-          </a>
+          </Link>
         </p>
       </div>
     </div>

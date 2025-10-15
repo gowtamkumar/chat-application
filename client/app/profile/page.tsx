@@ -9,9 +9,5 @@ export default async function page() {
     redirect("/login");
   }
 
-  return (
-    <div className="grid items-center justify-items-center  font-[family-name:var(--font-geist-sans)]">
-      <Profile />
-    </div>
-  );
+  return <Profile />;
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @next/next/no-img-element */
+
 "use client";
 import { getMessages } from "@/utils/api/message";
 import { getUser } from "@/utils/api/user";
@@ -116,13 +116,19 @@ export default function SingleChatPage({ usePrams }: any) {
           onClose={() => setNotification(null)}
         />
       )}
+
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
         <div className="flex items-center space-x-4">
-          <img
-            src={user?.image}
-            alt={user?.name}
+          <Image
+            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user.file || "user.png"
+              }`}
+            width={500}
+            height={500}
+            alt={user?.name || "user"}
             className="w-12 h-12 rounded-full border-2 border-blue-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+
           <div>
             <div className="font-semibold text-lg text-gray-700">
               {user?.name}
@@ -142,46 +148,29 @@ export default function SingleChatPage({ usePrams }: any) {
                 }`}
             >
               {!isCurrentUser && (
-                <img
-                  src={user?.image}
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user.file || "user.png"
+                    }`}
+                  width={500}
+                  height={500}
                   alt={user?.name}
-                  className="w-8 h-8 rounded-full mr-2"
+                  className="w-8 h-8 rounded-full ml-2 object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               )}
               <div
-                className={`p-3 rounded-xl shadow text-sm max-w-xs break-words ${isCurrentUser
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-gray-700"
+                className={`text-sm max-w-xs break-words ${isCurrentUser && !msg?.file
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700"
                   }`}
               >
-                {!isCurrentUser && (
-                  <div className="text-xs font-semibold mb-1 text-gray-500">
-                    {user?.name}
-                  </div>
-                )}
                 {msg?.content && <p>{msg.content}</p>}
-                {msg?.audioUrl && (
-                  <audio controls className="w-full">
-                    <source src={msg?.audioUrl} />
-                    Your browser does not support the audio element.
-                  </audio>
-                )}
-                {msg?.imageUrl && (
-                  <Image
-                    src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user.file}`}
-                    width={500}
-                    height={500}
-                    alt={user?.name}
-                    className="w-8 h-8 rounded-full ml-2 object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                )}
 
                 {msg?.file && (
                   <FileViewer
                     file={{
                       pdf: {
-                        width: "40%",
+                        width: "60%",
                         height: "10vh",
                       },
                       mp4: {
@@ -204,7 +193,8 @@ export default function SingleChatPage({ usePrams }: any) {
 
               {isCurrentUser && (
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUserId.file}`}
+                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUserId.file || "user.png"
+                    }`}
                   width={500}
                   height={500}
                   alt={currentUserId?.name}
@@ -224,9 +214,10 @@ export default function SingleChatPage({ usePrams }: any) {
             <EmojiPicker onEmojiClick={handleEmojiClick} />
           </div>
         )}
+
         <div>
           {file.filename ? (
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <FileViewer
                 file={{
                   pdf: {
@@ -261,6 +252,7 @@ export default function SingleChatPage({ usePrams }: any) {
               <FileUpload setFile={setFile} fieldname="file" listType="" />
               <Button
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
+                size="large"
                 className="text-blue-500 hover:text-blue-600 cursor-pointer"
                 aria-label="Toggle emoji picker"
               >
@@ -269,6 +261,7 @@ export default function SingleChatPage({ usePrams }: any) {
 
               <Input
                 type="text"
+                size="large"
                 placeholder="Type a message or drop a file..."
                 className="flex-1 p-2 border rounded-full text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={inputText}
@@ -281,6 +274,7 @@ export default function SingleChatPage({ usePrams }: any) {
 
               <Button
                 onClick={sendMessage}
+                size="large"
                 className="bg-blue-500  text-white px-4 py-2 rounded-full hover:bg-blue-600"
                 aria-label="Send message"
               >

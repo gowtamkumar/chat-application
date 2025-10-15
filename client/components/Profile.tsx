@@ -3,7 +3,7 @@
 "use client";
 
 import { userUpdate } from "@/utils/api/user";
-import { Button } from "antd";
+import { Button, Input } from "antd";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import FileUpload from "./FileUpload";
@@ -70,132 +70,143 @@ export default function Profile() {
   };
 
   return (
-    // <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg mt-8">
     <div>
-      {/* Header */}
       <Header />
-      <div className="flex flex-col items-center space-y-4">
-        <FileViewer
-          file={{
-            pdf: {
-              width: "40%",
-              height: "10vh",
-            },
-            mp4: {
-              width: "40%",
-              height: "10vh",
-            },
-            imgStyle: {
-              width: 100,
-              height: 100,
-              className:
-                "w-28 h-28 rounded-full border-4 border-indigo-500 shadow-md object-cover",
-            },
-            fileData: {
-              filename: file.filename,
-              filetype: file.mimetype,
-            },
-          }}
-        />
-
-        {!editing ? (
-          <>
-            <h1 className="text-3xl font-extrabold text-indigo-700">
-              {profile.name}
-            </h1>
-            <p className="text-gray-600">{profile.email}</p>
-            <button
-              onClick={() => setEditing(true)}
-              className="mt-3 px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
-            >
-              Edit Profile
-            </button>
-          </>
-        ) : (
-          <div className="w-full max-w-md space-y-5">
-            <div>
-              <label
-                htmlFor="name"
-                className="block font-semibold text-indigo-700 mb-1"
-              >
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block font-semibold text-indigo-700 mb-1"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <FileUpload
-              setFile={setFile}
-              fieldname="file"
-              listType="picture-card"
-            />
-
-            <div className="flex justify-end space-x-3">
-              <Button
-                onClick={() => {
-                  setEditing(false);
-                  setLoading(false);
+      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center   font-[family-name:var(--font-geist-sans)]">
+        <main className="flex flex-col gap-[32px] py-10 row-start-2 items-center sm:items-start">
+          <div className="mx-auto p-6 bg-white mt-10">
+            <div className="flex flex-col items-center space-y-4">
+              <FileViewer
+                file={{
+                  pdf: {
+                    width: "40%",
+                    height: "10vh",
+                  },
+                  mp4: {
+                    width: "40%",
+                    height: "10vh",
+                  },
+                  imgStyle: {
+                    width: 100,
+                    height: 100,
+                    className:
+                      "w-28 h-28 rounded-full border-4 border-indigo-500 shadow-md object-cover",
+                  },
+                  fileData: {
+                    filename: file.filename,
+                    filetype: file.mimetype,
+                  },
                 }}
-                className="px-4 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
-              >
-                Cancel
-              </Button>
+              />
+
+              {!editing ? (
+                <>
+                  <h1 className="text-3xl font-extrabold text-indigo-700">
+                    {profile.name}
+                  </h1>
+                  <p className="text-gray-600">{profile.email}</p>
+                  <Button
+                    onClick={() => setEditing(true)}
+                    size="large"
+                    className="mt-3 px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition cursor-pointer"
+                  >
+                    Edit Profile
+                  </Button>
+                </>
+              ) : (
+                <div className="w-full max-w-md space-y-5">
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="block font-semibold text-indigo-700 mb-1"
+                    >
+                      Name
+                    </label>
+                    <Input
+                      id="name"
+                      type="text"
+                      size="large"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block font-semibold text-indigo-700 mb-1"
+                    >
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      size="large"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <FileUpload
+                    setFile={setFile}
+                    fieldname="file"
+                    listType="picture-card"
+                  />
+
+                  <div className="flex justify-end space-x-3">
+                    <Button
+                      onClick={() => {
+                        setEditing(false);
+                        setLoading(false);
+                      }}
+                      size="large"
+                      className="px-4 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      loading={loading}
+                      size="large"
+                      className="px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Additional info / stats */}
+            <section className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
+                <h2 className="text-indigo-700 font-bold text-xl">Chats</h2>
+                <p className="text-indigo-900 text-3xl mt-2">152</p>
+              </div>
+              <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
+                <h2 className="text-indigo-700 font-bold text-xl">Groups</h2>
+                <p className="text-indigo-900 text-3xl mt-2">12</p>
+              </div>
+              <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
+                <h2 className="text-indigo-700 font-bold text-xl">Unread</h2>
+                <p className="text-indigo-900 text-3xl mt-2">7</p>
+              </div>
+            </section>
+
+            {/* Logout */}
+            <div className="mt-10 text-center">
               <Button
-                onClick={handleSave}
-                loading={loading}
-                className="px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
+                danger
+                size="large"
+                onClick={() => signOut()}
+                className="px-6 py-2 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition cursor-pointer"
               >
-                Save
+                Logout
               </Button>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Additional info / stats */}
-      <section className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
-          <h2 className="text-indigo-700 font-bold text-xl">Chats</h2>
-          <p className="text-indigo-900 text-3xl mt-2">152</p>
-        </div>
-        <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
-          <h2 className="text-indigo-700 font-bold text-xl">Groups</h2>
-          <p className="text-indigo-900 text-3xl mt-2">12</p>
-        </div>
-        <div className="bg-indigo-50 rounded-xl p-6 text-center shadow">
-          <h2 className="text-indigo-700 font-bold text-xl">Unread</h2>
-          <p className="text-indigo-900 text-3xl mt-2">7</p>
-        </div>
-      </section>
-
-      {/* Logout */}
-      <div className="mt-10 text-center">
-        <button
-          onClick={() => signOut()}
-          className="px-6 py-2 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
+        </main>
       </div>
     </div>
   );

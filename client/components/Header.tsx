@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { signOut } from "@/auth";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ export default function Header() {
   return (
     <header className="flex items-center justify-between p-5 bg-white shadow-md relative">
       <h1 className="text-3xl font-extrabold text-indigo-700 tracking-wide">
-        Chats
+        <Link href={'/chat'} >Chats</Link>
       </h1>
 
       {/* Profile section */}
@@ -24,7 +24,7 @@ export default function Header() {
           aria-label="Toggle profile menu"
         >
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser.file}`}
+            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser.file || 'user.png'}`}
             width={100}
             height={100}
             alt={currentUser?.name}
@@ -56,19 +56,19 @@ export default function Header() {
           <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20">
             <button
               onClick={() => route.push("/profile")}
-              className="w-full text-left px-4 py-2 text-gray-400 hover:bg-indigo-100"
+              className="w-full text-left px-4 py-2 text-gray-400 cursor-pointer hover:bg-indigo-100"
             >
               Profile
             </button>
             <button
               onClick={() => route.push("setting")}
-              className="w-full text-left px-4 py-2 text-gray-400 hover:bg-indigo-100"
+              className="w-full text-left px-4 py-2 text-gray-400 cursor-pointer hover:bg-indigo-100"
             >
               Settings
             </button>
             <button
               onClick={() => signOut()}
-              className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
+              className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 cursor-pointer"
             >
               Logout
             </button>
