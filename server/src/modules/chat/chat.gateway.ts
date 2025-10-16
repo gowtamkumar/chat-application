@@ -23,7 +23,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private userSockets: Map<string, string> = new Map(); // userId -> socketId
+  public userSockets: Map<string, string> = new Map(); // userId -> socketId
 
   constructor(
     @InjectRepository(MessagesEntity)
@@ -44,6 +44,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.user = user;
       this.userSockets.set(user.id, client.id);
       console.log(`User connected: ${user.id} (${client.id})`);
+      this.broadcastOnlineUsers();
     } catch (err) {
       console.error('Connection error:', err.message);
       client.disconnect();
@@ -56,6 +57,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.delete(userId);
     }
     console.log(`User disconnected: ${userId}`);
+    this.broadcastOnlineUsers();
   }
 
   // // ✅ Join group
@@ -95,6 +97,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   //     createdAt: savedMessage.createdAt,
   //   });
   // }
+  // 🔹 Broadcast online user list
+
+  private broadcastOnlineUsers() {
+    const onlineUsers = Array.from(this.userSockets.keys());
+    this.server.emit('online_users', onlineUsers);
+  }
+  // 🔹 Helper — check if user online
+  isUserOnline(userId: string): boolean {
+    return this.userSockets.has(userId);
+  }
 
   @SubscribeMessage('single_chat')
   async handleSingleChat(
@@ -107,8 +119,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Save message to DB
       const savedMessage = this.messageRepo.create({
-        content: data.content,
         senderId,
+        content: data.content,
         file: data.file,
         filetype: data.filetype,
         receiverId: data.senderId,
@@ -120,14 +132,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // ✅ Send to receiver only
       if (receiverSocketId) {
-        this.server.to(receiverSocketId).emit('single_chat', {
-          senderId,
-          receiverId: data.senderId,
-          content: data.content,
-          file: data.file,
-          filetype: data.filetype,
-          createdAt: savedMessage.createdAt,
-        });
+        this.server.to(receiverSocketId).emit('single_chat', savedMessage);
       } else {
         client.emit('user_offline', { userId: data.senderId });
       }

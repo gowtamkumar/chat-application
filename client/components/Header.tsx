@@ -2,18 +2,17 @@
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 
 export default function Header() {
-  const route = useRouter();
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const session: any = useSession();
   const currentUser = session.data?.user.user;
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   return (
     <header className="flex items-center justify-between p-5 bg-white shadow-md relative">
       <h1 className="text-3xl font-extrabold text-indigo-700 tracking-wide">
-        <Link href={'/chat'} >Chats</Link>
+        <Link href={"/chat"}>Chats</Link>
       </h1>
 
       {/* Profile section */}
@@ -24,7 +23,8 @@ export default function Header() {
           aria-label="Toggle profile menu"
         >
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser.file || 'user.png'}`}
+            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser.file || "user.png"
+              }`}
             width={100}
             height={100}
             alt={currentUser?.name}
@@ -55,13 +55,13 @@ export default function Header() {
         {profileDropdownOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20">
             <button
-              onClick={() => route.push("/profile")}
+              onClick={() => redirect("/profile")}
               className="w-full text-left px-4 py-2 text-gray-400 cursor-pointer hover:bg-indigo-100"
             >
               Profile
             </button>
             <button
-              onClick={() => route.push("setting")}
+              onClick={() => redirect("setting")}
               className="w-full text-left px-4 py-2 text-gray-400 cursor-pointer hover:bg-indigo-100"
             >
               Settings

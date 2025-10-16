@@ -163,8 +163,8 @@ Auto Update: ${autoUpdate ? "On" : "Off"}
                   disabled={saving}
                   size="large"
                   className={`w-full sm:w-auto px-8 py-3 rounded-full font-semibold text-white ${saving
-                    ? "bg-indigo-300 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
+                      ? "bg-indigo-300 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
                     } transition`}
                 >
                   {saving ? "Saving..." : "Save Settings"}

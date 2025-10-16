@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import Profile from "@/components/Profile";
+import Profile from "@/components/profile/Profile";
 import { redirect } from "next/navigation";
 
 export default async function page() {

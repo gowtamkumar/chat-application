@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
-
 import { userUpdate } from "@/utils/api/user";
 import { Button, Input } from "antd";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import FileUpload from "./FileUpload";
-import FileViewer from "./FileViewer";
-import Header from "./Header";
+import FileUpload from "../chat/FileUpload";
+import FileViewer from "../chat/FileViewer";
+import Header from "../Header";
 
 export default function Profile() {
   const [file, setFile] = useState({} as any);

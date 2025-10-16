@@ -15,13 +15,13 @@ export default function FileUpload({ setFile, fieldname, listType }: any) {
   // };
 
   const customUploadRequest = async (options: any) => {
+
     const { filename, file, onSuccess, onError } = options;
     const formData = new FormData();
     formData.append(filename, file);
 
     try {
       const res = await uploadFile(formData);
-
 
       if (res.success) {
         setFile(res.data);
@@ -48,7 +48,7 @@ export default function FileUpload({ setFile, fieldname, listType }: any) {
       >
         <FaCloudUploadAlt
           size={22}
-          className="cursor-pointer text-blue-500 hover:text-blue-600 transition"
+          className="cursor-pointer  transition"
         />
       </Upload>
     </div>

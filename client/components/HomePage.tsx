@@ -5,9 +5,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  // const router = useRouter();
-
-  const session = useSession()
+  const session = useSession();
   if (session?.status === "authenticated") {
     redirect("/chat");
   }

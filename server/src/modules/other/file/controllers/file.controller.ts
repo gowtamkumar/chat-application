@@ -103,7 +103,7 @@ export class FileController {
     file: Express.Multer.File,
   ) {
     const newFile = await this.filesService.createFile(file);
-    console.log('file', file);
+    // console.log('file', file);
 
     return {
       success: true,

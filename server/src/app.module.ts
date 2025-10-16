@@ -1,6 +1,7 @@
 import { AdminModule } from '@admin/admin.module';
 import { ChatModule } from '@modules/chat/chat.module';
 import { ContactModule } from '@modules/contact/contact.module';
+// import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { MessagesModule } from '@modules/message/message.module';
 import { OtherModule } from '@modules/other/other.module';
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { DatabaseModule } from './database/database.module';
     OtherModule,
     MessagesModule,
     ContactModule,
+    // NotificationsModule,
   ],
   controllers: [],
   providers: [],

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
-import Chat from "@/components/Chat";
+import Chat from "@/components/chat/Chat";
+import { getUsers } from "@/utils/api/user";
 import { redirect } from "next/navigation";
 
 export default async function page() {
@@ -8,5 +9,7 @@ export default async function page() {
     redirect("/login");
   }
 
-  return <Chat />;
+  const users = await getUsers();
+
+  return <Chat newusers={users.data} />;
 }

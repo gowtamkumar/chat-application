@@ -1,30 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
-
 import Header from "@/components/Header";
 import SingleChatPage from "@/components/SingleChatPage";
-import { getUsers } from "@/utils/api/user";
 import { Input } from "antd";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export default function Chat() {
+export default function Chat({ newusers }: any) {
   const [selectedChatId, setSelectedChatId] = useState<any | null>(null);
   const [search, setSearch] = useState("");
-  const [users, setUsers] = useState([]);
-  const route = useRouter();
+  const [users, setUsers] = useState<any[]>(newusers);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // const fetchData = useCallback(async () => {
+  //   const users = await getUsers();
+  //   setUsers(users.data);
+  // }, []);
 
-  const fetchData = async () => {
-    const users = await getUsers();
-    setUsers(users.data || []);
-  };
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
   // Filter chats based on active tab and search query
   const filteredChats = (users || []).filter((chat: any) => {
@@ -37,6 +33,7 @@ export default function Chat() {
   return (
     <div className="flex flex-col  bg-gradient-to-br from-indigo-50 to-white shadow-lg">
       <Header />
+
       <main className="grid grid-cols-4 overflow-y-auto bg-white">
         <div>
           <div className="p-4 bg-white">
@@ -46,25 +43,25 @@ export default function Chat() {
               placeholder="Search chats..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full p-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:text-gray-600 placeholder-gray-500 shadow-sm transition"
+              className="w-full p-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:text-gray-600 placeholder-gray-500 transition"
             />
           </div>
+          <h2 className="p-2 bg-gray-100">
+            🟢 Online Users ({onlineUsers.length})
+          </h2>
           {/* Chat List */}
           {filteredChats.map((chat: any) => {
             return (
               <div
                 key={chat.id}
-                onClick={() => {
-                  setSelectedChatId(chat);
-                  // const link = `/chat/${chat.id}`;
-                  // route.push(link);
-                }}
+                onClick={() => setSelectedChatId(chat)}
                 className={`flex items-center px-6 py-4 cursor-pointer transition hover:bg-indigo-100`}
               >
                 {/* Avatar with online badge */}
                 <div className="relative">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${chat.file || 'user.png'}`}
+                    src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${chat?.file || "user.png"
+                      }`}
                     width={100}
                     height={100}
                     alt={chat?.name}
@@ -72,9 +69,9 @@ export default function Chat() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
 
-                  {/* {chat.isOnline && (
-                  <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
-                )} */}
+                  {onlineUsers.includes(chat.id) && (
+                    <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse"></span>
+                  )}
                 </div>
 
                 {/* Chat info */}
@@ -105,8 +102,11 @@ export default function Chat() {
 
         <div className="col-span-3">
           {selectedChatId ? (
-            // <div>{selectedChatId.name}</div>
-            <SingleChatPage usePrams={selectedChatId} />
+            <SingleChatPage
+              usePrams={selectedChatId}
+              setOnlineUsers={setOnlineUsers}
+              onlineUsers={onlineUsers}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center h-[90vh] bg-[#f0f2f5] text-gray-800">
               {/* Illustration */}
@@ -190,7 +190,6 @@ export default function Chat() {
                     d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12s4.03-9 9-9 9 4.03 9 9z"
                   />
                 </svg>
-                {/* <span>Your personal messages are end-to-end encrypted</span> */}
               </div>
             </div>
           )}

@@ -4,20 +4,28 @@
 import { getMessages } from "@/utils/api/message";
 import { getUser } from "@/utils/api/user";
 import { createSocket } from "@/utils/socket";
-import { Button, Input } from "antd";
+import { Button, Input, Modal } from "antd";
 import EmojiPicker from "emoji-picker-react";
+import { IoCamera } from "react-icons/io5";
+
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 // import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
-import FileUpload from "./FileUpload";
-import FileViewer from "./FileViewer";
+import FileUpload from "./chat/FileUpload";
+import FileViewer from "./chat/FileViewer";
+import CameraRecorder from "./media/CameraCapture";
+import VoiceRecorder from "./media/VoiceChat";
 import Notification from "./Notification";
 
-export default function SingleChatPage({ usePrams }: any) {
+export default function SingleChatPage({
+  usePrams,
+  onlineUsers,
+  setOnlineUsers,
+}: any) {
   const session: any = useSession();
-  // const usePrams = useParams();
+
   const [file, setFile] = useState({} as any);
   const [user, setUser] = useState({} as any);
   const [messages, setMessages] = useState<any[]>([]);
@@ -25,7 +33,9 @@ export default function SingleChatPage({ usePrams }: any) {
   const [notification, setNotification] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const currentUserId = session.data?.user?.user;
 
   const getSingleUser = useCallback(async (id: number | string) => {
@@ -42,12 +52,12 @@ export default function SingleChatPage({ usePrams }: any) {
     if (session?.data?.user?.accessToken) {
       getSingleUser(usePrams.id as string);
     }
-  }, [getSingleUser, usePrams]);
+  }, [getSingleUser, session?.data?.user?.accessToken, usePrams]);
 
   // ✅ Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [user]);
+  }, [messages]);
 
   const getMessage = useCallback(async () => {
     const message = await getMessages({
@@ -55,7 +65,7 @@ export default function SingleChatPage({ usePrams }: any) {
       usePrams,
     });
     setMessages(message.data || []);
-  }, [usePrams]);
+  }, [currentUserId.id, usePrams]);
 
   useEffect(() => {
     if (session.status === "authenticated") {
@@ -70,14 +80,15 @@ export default function SingleChatPage({ usePrams }: any) {
       newSocket.on("single_chat", (msg) => {
         setMessages((prev) => [...prev, msg]);
       });
-
       newSocket.on("user_offline", () => {
         setNotification(
-          `${user?.name || "User"
-          } is offline. Message will be sent when they are back online.`
+          "User is offline. Message will be sent when they are back online"
         );
       });
-
+      // 🔹 Online users update
+      newSocket.on("online_users", (users: string[]) => {
+        setOnlineUsers(users);
+      });
       return () => {
         newSocket.disconnect();
       };
@@ -120,7 +131,7 @@ export default function SingleChatPage({ usePrams }: any) {
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
         <div className="flex items-center space-x-4">
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user.file || "user.png"
+            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user?.file || "user.png"
               }`}
             width={500}
             height={500}
@@ -133,7 +144,7 @@ export default function SingleChatPage({ usePrams }: any) {
             <div className="font-semibold text-lg text-gray-700">
               {user?.name}
             </div>
-            <div className="text-sm text-gray-400">Online</div>
+            <h2> {onlineUsers.includes(user.id) ? "🟢 Online" : "Offline"}</h2>
           </div>
         </div>
       </header>
@@ -141,15 +152,16 @@ export default function SingleChatPage({ usePrams }: any) {
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {(messages || []).map((msg, idx: number) => {
           const isCurrentUser = msg.senderId === currentUserId.id;
+
           return (
             <div
               key={idx}
-              className={`flex items-end ${isCurrentUser ? "justify-end" : "justify-start"
+              className={`flex items - end ${isCurrentUser ? "justify-end" : "justify-start"
                 }`}
             >
               {!isCurrentUser && (
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user.file || "user.png"
+                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user?.file || "user.png"
                     }`}
                   width={500}
                   height={500}
@@ -159,12 +171,14 @@ export default function SingleChatPage({ usePrams }: any) {
                 />
               )}
               <div
-                className={`text-sm max-w-xs break-words ${isCurrentUser && !msg?.file
+                className={`text - sm max - w - xs break-words ${isCurrentUser && !msg?.file
                   ? "bg-blue-500 text-white"
                   : "bg-white text-gray-700"
-                  }`}
+                  } `}
               >
-                {msg?.content && <p>{msg.content}</p>}
+                {msg?.content && (
+                  <p className="p-2 rounded-lg">{msg.content}</p>
+                )}
 
                 {msg?.file && (
                   <FileViewer
@@ -193,7 +207,7 @@ export default function SingleChatPage({ usePrams }: any) {
 
               {isCurrentUser && (
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUserId.file || "user.png"
+                  src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUserId?.file || "user.png"
                     }`}
                   width={500}
                   height={500}
@@ -208,7 +222,7 @@ export default function SingleChatPage({ usePrams }: any) {
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="p-4 bg-white border-t relative">
+      <footer className="p-2 bg-white border-t relative">
         {showEmojiPicker && (
           <div className="absolute bottom-20 left-4 z-10">
             <EmojiPicker onEmojiClick={handleEmojiClick} />
@@ -244,11 +258,29 @@ export default function SingleChatPage({ usePrams }: any) {
                 className="bg-blue-500  text-white px-4 py-2 rounded-full hover:bg-blue-600"
                 aria-label="Send message"
               >
-                Send
+                📤 Send
               </Button>
             </div>
           ) : (
             <div className="flex items-center   space-x-2 p-2 rounded-xl border-2 border-transparent transition focus-within:border-blue-400 focus-within:bg-blue-50">
+              <VoiceRecorder setFile={setFile} />
+              <Modal
+                title="Camera"
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+              >
+                <CameraRecorder
+                  setFile={setFile}
+                  setIsModalOpen={setIsModalOpen}
+                />
+              </Modal>
+
+              <IoCamera
+                size={22}
+                className="cursor-pointer"
+                onClick={() => setIsModalOpen(true)}
+              />
               <FileUpload setFile={setFile} fieldname="file" listType="" />
               <Button
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
@@ -278,7 +310,7 @@ export default function SingleChatPage({ usePrams }: any) {
                 className="bg-blue-500  text-white px-4 py-2 rounded-full hover:bg-blue-600"
                 aria-label="Send message"
               >
-                Send
+                📤 Send
               </Button>
             </div>
           )}
