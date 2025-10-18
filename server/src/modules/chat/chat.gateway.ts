@@ -150,4 +150,45 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: 'Failed to send message' });
     }
   }
+
+  // audio call
+  @SubscribeMessage('call-user')
+  callUser(@MessageBody() data, @ConnectedSocket() client: Socket) {
+    const targetSocketId = this.userSockets.get(data.to);
+    if (!targetSocketId) return;
+
+    // send caller id and offer to receiver
+    client.to(targetSocketId).emit('call-made', {
+      from: client.data.user.id, // <<< include the caller id
+      offer: data.offer,
+    });
+  }
+
+  @SubscribeMessage('make-answer')
+  makeAnswer(@MessageBody() data, @ConnectedSocket() client: Socket) {
+    const targetSocket = this.userSockets.get(data.to);
+    if (targetSocket) {
+      client
+        .to(targetSocket)
+        .emit('answer-made', { from: data.from, answer: data.answer });
+    }
+  }
+
+  @SubscribeMessage('ice-candidate')
+  iceCandidate(@MessageBody() data, @ConnectedSocket() client: Socket) {
+    const targetSocket = this.userSockets.get(data.to);
+    if (targetSocket) {
+      client
+        .to(targetSocket)
+        .emit('ice-candidate', { from: data.from, candidate: data.candidate });
+    }
+  }
+
+  @SubscribeMessage('end-call')
+  endCall(@MessageBody() data, @ConnectedSocket() client: Socket) {
+    const targetSocket = this.userSockets.get(data.to);
+    if (targetSocket) {
+      client.to(targetSocket).emit('call-ended', { from: data.from });
+    }
+  }
 }

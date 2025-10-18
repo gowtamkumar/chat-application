@@ -13,8 +13,10 @@ import Image from "next/image";
 // import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
+import AudioCall from "./chat/AudioCall";
 import FileUpload from "./chat/FileUpload";
 import FileViewer from "./chat/FileViewer";
+import VideoCall from "./chat/VideoCall";
 import CameraRecorder from "./media/CameraCapture";
 import VoiceRecorder from "./media/VoiceChat";
 import Notification from "./Notification";
@@ -29,7 +31,7 @@ export default function SingleChatPage({
   const [file, setFile] = useState({} as any);
   const [user, setUser] = useState({} as any);
   const [messages, setMessages] = useState<any[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | any>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -77,6 +79,7 @@ export default function SingleChatPage({
       newSocket.on("connect", () => {
         console.log("Connected:", newSocket.id);
       });
+
       newSocket.on("single_chat", (msg) => {
         setMessages((prev) => [...prev, msg]);
       });
@@ -129,7 +132,7 @@ export default function SingleChatPage({
       )}
 
       <header className="bg-white shadow p-4 flex items-center justify-between border-b">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between space-x-4">
           <Image
             src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user?.file || "user.png"
               }`}
@@ -146,6 +149,9 @@ export default function SingleChatPage({
             </div>
             <h2> {onlineUsers.includes(user.id) ? "🟢 Online" : "Offline"}</h2>
           </div>
+
+          {socket && <AudioCall socket={socket} targetUserId={usePrams.id} />}
+          {socket && <VideoCall socket={socket} targetUserId={usePrams.id} />}
         </div>
       </header>
 
