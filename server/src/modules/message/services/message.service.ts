@@ -27,6 +27,7 @@ export class MessagesService {
     this.logger.log(`${this.getMessagess.name} called`);
 
     const { senderId, receiverId } = filterMessagesDto;
+    console.log('filterMessagesDto', filterMessagesDto);
 
     // const reqQuery: { senderId: string; receiverId: string } = {} as {
     //   senderId: string;

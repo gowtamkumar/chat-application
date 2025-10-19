@@ -1,9 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
-import { getMessages } from "@/utils/api/message";
 import { getUser } from "@/utils/api/user";
-import { createSocket } from "@/utils/socket";
 import { Button, Input, Modal } from "antd";
 import EmojiPicker from "emoji-picker-react";
 import { IoCamera } from "react-icons/io5";
@@ -11,27 +10,26 @@ import { IoCamera } from "react-icons/io5";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 // import { useParams } from "next/navigation";
+import { getMessages } from "@/utils/api/message";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Socket } from "socket.io-client";
 import AudioCall from "./chat/AudioCall";
 import FileUpload from "./chat/FileUpload";
 import FileViewer from "./chat/FileViewer";
-import VideoCall from "./chat/VideoCall";
 import CameraRecorder from "./media/CameraCapture";
 import VoiceRecorder from "./media/VoiceChat";
 import Notification from "./Notification";
 
 export default function SingleChatPage({
-  usePrams,
+  // socket,
+  useParams,
   onlineUsers,
-  setOnlineUsers,
+  socket,
 }: any) {
   const session: any = useSession();
 
   const [file, setFile] = useState({} as any);
   const [user, setUser] = useState({} as any);
   const [messages, setMessages] = useState<any[]>([]);
-  const [socket, setSocket] = useState<Socket | any>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -49,60 +47,51 @@ export default function SingleChatPage({
     }
   }, []);
 
+  const getMessage = useCallback(async () => {
+    const message = await getMessages({
+      currentUserId: currentUserId.id,
+      useParams: useParams.id as string,
+    });
+    setMessages(message.data || []);
+  }, [currentUserId.id, useParams.id]);
+
   // ✅ Fetch users once when accessToken is available
   useEffect(() => {
     if (session?.data?.user?.accessToken) {
-      getSingleUser(usePrams.id as string);
+      getSingleUser(useParams.id as string);
+      getMessage();
     }
-  }, [getSingleUser, session?.data?.user?.accessToken, usePrams]);
+  }, [
+    // getSingleUser,
+    session?.data?.user?.accessToken,
+    getMessage,
+    useParams.id,
+  ]);
 
   // ✅ Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const getMessage = useCallback(async () => {
-    const message = await getMessages({
-      currentUserId: currentUserId.id,
-      usePrams,
-    });
-    setMessages(message.data || []);
-  }, [currentUserId.id, usePrams]);
-
   useEffect(() => {
-    if (session.status === "authenticated") {
-      getMessage();
-
-      const newSocket = createSocket(session.data.user.accessToken);
-      setSocket(newSocket);
-
-      newSocket.on("connect", () => {
-        console.log("Connected:", newSocket.id);
-      });
-
-      newSocket.on("single_chat", (msg) => {
+    if (socket) {
+      socket.on("single_chat", (msg: any) => {
         setMessages((prev) => [...prev, msg]);
       });
-      newSocket.on("user_offline", () => {
+
+      socket.on("user_offline", () => {
         setNotification(
           "User is offline. Message will be sent when they are back online"
         );
       });
-      // 🔹 Online users update
-      newSocket.on("online_users", (users: string[]) => {
-        setOnlineUsers(users);
-      });
-      return () => {
-        newSocket.disconnect();
-      };
     }
-  }, [getMessage]);
+  }, [socket]);
 
   const sendMessage = async () => {
     if ((inputText.trim() || file.filename) && socket) {
       const messge = {
         content: inputText.trim(),
-        senderId: usePrams.id,
+        senderId: useParams.id,
         file: file.filename,
         filetype: file.mimetype,
       };
@@ -147,11 +136,15 @@ export default function SingleChatPage({
             <div className="font-semibold text-lg text-gray-700">
               {user?.name}
             </div>
-            <h2> {onlineUsers.includes(user.id) ? "🟢 Online" : "Offline"}</h2>
+            <h2> {onlineUsers.includes(user?.id) ? "🟢 Online" : "Offline"}</h2>
           </div>
 
-          {socket && <AudioCall socket={socket} targetUserId={usePrams.id} />}
-          {socket && <VideoCall socket={socket} targetUserId={usePrams.id} />}
+          {socket && (
+            <AudioCall socket={socket} targetUserId={useParams.id as string} />
+          )}
+          {/* {socket && (
+            <VideoCall socket={socket} targetUserId={useParams.id as string} />
+          )} */}
         </div>
       </header>
 

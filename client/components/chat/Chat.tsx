@@ -3,24 +3,49 @@
 "use client";
 import Header from "@/components/Header";
 import SingleChatPage from "@/components/SingleChatPage";
+import { getUsers } from "@/utils/api/user";
+import { createSocket } from "@/utils/socket";
 import { Input } from "antd";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Socket } from "socket.io-client";
 
 export default function Chat({ newusers }: any) {
   const [selectedChatId, setSelectedChatId] = useState<any | null>(null);
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<any[]>(newusers);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [socket, setSocket] = useState<Socket | any>(null);
+  const session: any = useSession();
+  const fetchData = useCallback(async () => {
+    const users = await getUsers();
+    setUsers(users.data);
+  }, []);
 
-  // const fetchData = useCallback(async () => {
-  //   const users = await getUsers();
-  //   setUsers(users.data);
-  // }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      const newSocket = createSocket(session.data.user.accessToken);
+      setSocket(newSocket);
+
+      newSocket.on("connect", () => {
+        console.log("Connected:", newSocket.id);
+      });
+
+      // 🔹 Online users update
+      newSocket.on("online_users", (users: string[]) => {
+        setOnlineUsers(users);
+      });
+
+      return () => {
+        newSocket.disconnect();
+      };
+    }
+  }, [session.status, session.data?.user?.accessToken]);
 
   // Filter chats based on active tab and search query
   const filteredChats = (users || []).filter((chat: any) => {
@@ -103,9 +128,10 @@ export default function Chat({ newusers }: any) {
         <div className="col-span-3">
           {selectedChatId ? (
             <SingleChatPage
-              usePrams={selectedChatId}
+              useParams={selectedChatId}
               setOnlineUsers={setOnlineUsers}
               onlineUsers={onlineUsers}
+              socket={socket}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-[90vh] bg-[#f0f2f5] text-gray-800">

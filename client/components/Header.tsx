@@ -23,7 +23,7 @@ export default function Header() {
           aria-label="Toggle profile menu"
         >
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser.file || "user.png"
+            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${currentUser?.file || "user.png"
               }`}
             width={100}
             height={100}

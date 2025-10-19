@@ -261,7 +261,7 @@ export default function AudioCall({ socket, targetUserId }: AudioCallProps) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-3 bg-gray-100 p-4 rounded-md w-80">
+    <div className="flex flex-col items-center gap-3 bg-gray-100 rounded-md w-80">
       <h2 className="text-lg font-bold">🎧 Audio Call</h2>
       <audio ref={localAudioRef} autoPlay muted className="hidden" />
       <audio ref={remoteAudioRef} autoPlay className="w-full rounded" />

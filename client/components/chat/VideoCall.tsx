@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -30,21 +31,63 @@ export default function VideoCall({ socket, targetUserId }: VideoCallProps) {
   };
 
   // 🎥 Start camera + mic
+  // const startLocalStream = useCallback(async () => {
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({
+  //       video: true,
+  //       audio: true,
+  //     });
+  //     localStreamRef.current = stream;
+  //     if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+  //     return stream;
+  //   } catch (err) {
+  //     console.error("Error accessing camera/mic:", err);
+  //     alert("Please allow camera and microphone access.");
+  //     return null;
+  //   }
+  // }, []);
+
   const startLocalStream = useCallback(async () => {
     try {
+      // stop existing stream if already running
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((t) => t.stop());
+        localStreamRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
+
       localStreamRef.current = stream;
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      console.log(
+        "🎙️ Local tracks:",
+        stream.getTracks().map((t) => ({ kind: t.kind, enabled: t.enabled }))
+      );
+
       return stream;
-    } catch (err) {
-      console.error("Error accessing camera/mic:", err);
-      alert("Please allow camera and microphone access.");
+    } catch (err: any) {
+      console.error("Error accessing camera/mic:", err.name, err.message);
+
+      if (err.name === "NotReadableError") {
+        alert(
+          "Your camera or microphone is already in use by another application. Please close it and try again."
+        );
+      } else if (err.name === "NotAllowedError") {
+        alert("Please allow camera and microphone access.");
+      } else {
+        alert(`Camera/mic access error: ${err.message}`);
+      }
+
       return null;
     }
   }, []);
+
 
   // 🔚 End call
   const endCall = useCallback(() => {
@@ -103,19 +146,21 @@ export default function VideoCall({ socket, targetUserId }: VideoCallProps) {
 
     peerConnectionRef.current = pc;
     return pc;
-  }, [socket, targetUserId, currentUserId, endCall]);
+  }, [iceServers, targetUserId, currentUserId, socket, endCall]);
 
   // 📞 Start call
   const startCall = useCallback(async () => {
     if (!currentUserId || !targetUserId) return;
 
     setCallStatus("calling");
+
     const stream = await startLocalStream();
+
+
     if (!stream) {
       setCallStatus("idle");
       return;
     }
-
     const pc = createPeerConnection();
     stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
@@ -169,6 +214,8 @@ export default function VideoCall({ socket, targetUserId }: VideoCallProps) {
 
       setCallStatus("in-call");
       const stream = await startLocalStream();
+      console.log("in-call", stream);
+
       if (!stream) return;
 
       const pc = createPeerConnection();
@@ -187,6 +234,8 @@ export default function VideoCall({ socket, targetUserId }: VideoCallProps) {
 
     const onAnswerMade = async (data: any) => {
       if (!data?.answer) return;
+      console.log("onAnswerMade");
+
       await peerConnectionRef.current?.setRemoteDescription(
         new RTCSessionDescription(data.answer)
       );
