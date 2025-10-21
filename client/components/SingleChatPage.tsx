@@ -120,28 +120,31 @@ export default function SingleChatPage({
         />
       )}
 
-      <header className="bg-white shadow p-4 flex items-center justify-between border-b">
-        <div className="flex items-center justify-between space-x-4">
-          <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user?.file || "user.png"
-              }`}
-            width={500}
-            height={500}
-            alt={user?.name || "user"}
-            className="w-12 h-12 rounded-full border-2 border-blue-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-
-          <div>
+      <header className=" bg-white shadow p-4 justify-between border-b  ">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-2">
+            <Image
+              src={`${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/${user?.file || "user.png"
+                }`}
+              width={500}
+              height={500}
+              alt={user?.name || "user"}
+              className="w-12 h-12 rounded-full border-2 border-blue-500"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
             <div className="font-semibold text-lg text-gray-700">
               {user?.name}
+              <h2>
+                {" "}
+                {onlineUsers.includes(user?.id) ? "🟢 Online" : "Offline"}
+              </h2>
             </div>
-            <h2> {onlineUsers.includes(user?.id) ? "🟢 Online" : "Offline"}</h2>
           </div>
 
           {socket && (
             <AudioCall socket={socket} targetUserId={useParams.id as string} />
           )}
+
           {/* {socket && (
             <VideoCall socket={socket} targetUserId={useParams.id as string} />
           )} */}
@@ -171,8 +174,8 @@ export default function SingleChatPage({
               )}
               <div
                 className={`text - sm max - w - xs break-words ${isCurrentUser && !msg?.file
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-700"
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-gray-700"
                   } `}
               >
                 {msg?.content && (

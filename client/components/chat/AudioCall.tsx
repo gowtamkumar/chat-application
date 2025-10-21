@@ -5,6 +5,7 @@
 
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IoIosCall } from "react-icons/io";
 import { Socket } from "socket.io-client";
 
 interface AudioCallProps {
@@ -261,25 +262,45 @@ export default function AudioCall({ socket, targetUserId }: AudioCallProps) {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-3 bg-gray-100 rounded-md w-80">
-      <h2 className="text-lg font-bold">🎧 Audio Call</h2>
+    <div className="flex flex-row items-center justify-between">
+      {/* <div className="flex"> */}
+      {/* <h2 className="text-lg font-bold">🎧 </h2> */}
       <audio ref={localAudioRef} autoPlay muted className="hidden" />
       <audio ref={remoteAudioRef} autoPlay className="w-full rounded" />
 
-      <p>Status: {callStatus}</p>
+      <p className="p-2"> {callStatus}</p>
 
       {callStatus === "idle" && (
         <button
           onClick={startCall}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md"
+          className="bg-blue-600 text-white px-2 py-2 rounded-md"
         >
-          Start Call
+          <IoIosCall />
         </button>
       )}
 
-      {callStatus === "calling" && <p>Calling...</p>}
-
       {callStatus === "in-call" && (
+        <button
+          onClick={toggleMute}
+          className={`px-2 py-1 rounded-md ${muted ? "bg-red-500" : "bg-green-500"
+            } text-white`}
+        >
+          {muted ? "Unmute" : "Mute"}
+        </button>
+      )}
+
+      {callStatus !== "idle" && (
+        <div className="flex gap-2">
+          <button
+            onClick={endCall}
+            className="px-2 py-1 rounded-md bg-red-500 text-white"
+          >
+            End
+          </button>
+        </div>
+      )}
+
+      {/* {callStatus === "in-call" && (
         <div className="flex gap-2">
           <button
             onClick={toggleMute}
@@ -295,7 +316,8 @@ export default function AudioCall({ socket, targetUserId }: AudioCallProps) {
             End Call
           </button>
         </div>
-      )}
+      )} */}
+      {/* </div> */}
     </div>
   );
 }
